@@ -572,32 +572,18 @@ public class RhythmManager : MonoBehaviour
     /// </summary>
     private bool CheckHit(Note note)
     {
-        float dist;
+        float noteX = note.GetJudgementX();
+        float xDistance = Mathf.Abs(noteX - judgementX);
+        Debug.Log($"[判定] xDistance: {xDistance:F2}, interactRadius: {interactRadius:F2}");
 
-        if (judgmentArea == null)
+        if (xDistance <= interactRadius)
         {
-            // 降级：使用原来的 X 轴判定
-            float noteX = note.GetJudgementX();
-            dist = Mathf.Abs(noteX - judgementX);
-            Debug.Log($"[判定] 距离: {dist:F2} (降级模式)");
-        }
-        else
-        {
-            // 计算音符位置与判定区的距离
-            dist = Vector2.Distance(
-                new Vector2(note.transform.position.x, note.transform.position.y),
-                new Vector2(judgmentArea.position.x, judgmentArea.position.y)
-            );
-        }
-
-        if (dist <= interactRadius)
-        {
-            Debug.Log($"[判定成功] 距离: {dist:F2} <= {interactRadius}");
+            Debug.Log($"[判定成功] xDistance: {xDistance:F2} <= interactRadius: {interactRadius:F2}");
             return true;
         }
         else
         {
-            Debug.Log($"[判定失败] 距离: {dist:F2} > {interactRadius}");
+            Debug.Log($"[判定失败] xDistance: {xDistance:F2} > interactRadius: {interactRadius:F2}");
             return false;
         }
     }
