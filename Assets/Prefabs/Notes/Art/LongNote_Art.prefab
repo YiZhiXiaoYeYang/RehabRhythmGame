@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2956197857390343798}
   - component: {fileID: 8507306853214203529}
+  - component: {fileID: 6114975809527596072}
   m_Layer: 0
   m_Name: LongNote_Art
   m_TagString: Untagged
@@ -58,6 +59,37 @@ MonoBehaviour:
   noteSpeed: 5
   interactRadius: 1.5
   currentPhysicalLength: 0
+--- !u!114 &6114975809527596072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2252301933288681976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56ed4f90490bdc04a90c53ac6068ebf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 1
+  mainRenderer: {fileID: 0}
+  trackSprites:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  headRenderer: {fileID: 1610350743726542807}
+  tailRenderer: {fileID: 4965492875658802232}
+  headSprites:
+  - {fileID: 21300000, guid: 21f360f39d96f7d4f9777522d49843c0, type: 3}
+  - {fileID: 21300000, guid: e65fb9b31c4ba034a9c12b27646baa6c, type: 3}
+  - {fileID: 21300000, guid: e64398b044365464183cdf4331861ec5, type: 3}
+  - {fileID: 21300000, guid: 055d59c6364996f4d8e2acb29ecd8563, type: 3}
+  tailSprites:
+  - {fileID: 21300000, guid: 62e10e1cbf5d36f4aa2b6e5f52182c43, type: 3}
+  - {fileID: 21300000, guid: 8d3d37172232f724aba59e7b917c161b, type: 3}
+  - {fileID: 21300000, guid: cf920e56359ecfc43beee21abcbbb860, type: 3}
+  - {fileID: 21300000, guid: 3defdf50322750940af618c48cb97312, type: 3}
 --- !u!1 &8163542646194234630
 GameObject:
   m_ObjectHideFlags: 0

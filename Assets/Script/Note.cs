@@ -313,6 +313,12 @@ public class Note : MonoBehaviour
                 UpdateTailVisuals();
             }
         }
+
+        TrackNoteVisual trackVisual = GetComponent<TrackNoteVisual>();
+        if (trackVisual != null)
+        {
+            trackVisual.ApplyTrackVisual(trackID);
+        }
     }
 
     /// <summary>

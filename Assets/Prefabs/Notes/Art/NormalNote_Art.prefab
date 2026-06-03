@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1366494616548158311}
   - component: {fileID: 2510915829326026165}
+  - component: {fileID: 2391690475229996155}
   m_Layer: 0
   m_Name: NormalNote_Art
   m_TagString: Untagged
@@ -57,6 +58,37 @@ MonoBehaviour:
   noteSpeed: 5
   interactRadius: 1.5
   currentPhysicalLength: 0
+--- !u!114 &2391690475229996155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 911436398517037664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56ed4f90490bdc04a90c53ac6068ebf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  mainRenderer: {fileID: 871384728796922137}
+  trackSprites:
+  - {fileID: 21300000, guid: 21f360f39d96f7d4f9777522d49843c0, type: 3}
+  - {fileID: 21300000, guid: e65fb9b31c4ba034a9c12b27646baa6c, type: 3}
+  - {fileID: 21300000, guid: e64398b044365464183cdf4331861ec5, type: 3}
+  - {fileID: 21300000, guid: 055d59c6364996f4d8e2acb29ecd8563, type: 3}
+  headRenderer: {fileID: 0}
+  tailRenderer: {fileID: 0}
+  headSprites:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  tailSprites:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!1 &1705952212679548670
 GameObject:
   m_ObjectHideFlags: 0

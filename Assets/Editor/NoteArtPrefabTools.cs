@@ -11,6 +11,7 @@ public static class NoteArtPrefabTools
     private const string NormalPrefabPath = ArtNoteFolder + "/NormalNote_Art.prefab";
     private const string StrongPrefabPath = ArtNoteFolder + "/StrongNote_Art.prefab";
     private const string LongPrefabPath = ArtNoteFolder + "/LongNote_Art.prefab";
+    private const int TrackVisualCount = 4;
 
     [MenuItem(MenuRoot + "/Create Art Note Prefab Templates")]
     public static void CreateArtNotePrefabTemplates()
@@ -76,6 +77,51 @@ public static class NoteArtPrefabTools
         hasError |= !ValidateSingleNotePrefab(NormalPrefabPath, "NormalNote_Art", NoteType.Normal, "Visual", log);
         hasError |= !ValidateSingleNotePrefab(StrongPrefabPath, "StrongNote_Art", NoteType.Strong, "Visual", log);
         hasError |= !ValidateLongNotePrefab(log);
+
+        if (hasError)
+        {
+            Debug.LogError(log.ToString());
+        }
+        else
+        {
+            Debug.Log(log.ToString());
+        }
+    }
+
+    [MenuItem(MenuRoot + "/Add Track Note Visual Components")]
+    public static void AddTrackNoteVisualComponents()
+    {
+        StringBuilder log = new StringBuilder();
+        log.AppendLine("[NoteArtPrefabTools] Add Track Note Visual Components");
+
+        bool hasError = false;
+        hasError |= !ConfigureSingleTrackNoteVisual(NormalPrefabPath, "NormalNote_Art", log);
+        hasError |= !ConfigureSingleTrackNoteVisual(StrongPrefabPath, "StrongNote_Art", log);
+        hasError |= !ConfigureLongTrackNoteVisual(log);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        if (hasError)
+        {
+            Debug.LogError(log.ToString());
+        }
+        else
+        {
+            Debug.Log(log.ToString());
+        }
+    }
+
+    [MenuItem(MenuRoot + "/Validate Track Note Visuals")]
+    public static void ValidateTrackNoteVisuals()
+    {
+        StringBuilder log = new StringBuilder();
+        log.AppendLine("[NoteArtPrefabTools] Validate Track Note Visuals");
+
+        bool hasError = false;
+        hasError |= !ValidateSingleTrackNoteVisual(NormalPrefabPath, "NormalNote_Art", log);
+        hasError |= !ValidateSingleTrackNoteVisual(StrongPrefabPath, "StrongNote_Art", log);
+        hasError |= !ValidateLongTrackNoteVisual(log);
 
         if (hasError)
         {
@@ -261,6 +307,228 @@ public static class NoteArtPrefabTools
         }
 
         return valid;
+    }
+
+    private static bool ConfigureSingleTrackNoteVisual(string prefabPath, string rootName, StringBuilder log)
+    {
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) == null)
+        {
+            log.AppendLine($"ERROR: Missing {prefabPath}");
+            return false;
+        }
+
+        GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
+        bool valid = true;
+
+        try
+        {
+            TrackNoteVisual trackVisual = EnsureComponent<TrackNoteVisual>(root);
+            trackVisual.mode = TrackNoteVisualMode.SingleRenderer;
+            trackVisual.trackSprites = EnsureSpriteArraySize(trackVisual.trackSprites);
+
+            Transform visual = root.transform.Find("Visual");
+            SpriteRenderer visualRenderer = visual != null ? visual.GetComponent<SpriteRenderer>() : null;
+            trackVisual.mainRenderer = visualRenderer;
+
+            if (visualRenderer == null)
+            {
+                valid = false;
+                log.AppendLine($"ERROR: {prefabPath} is missing Visual SpriteRenderer.");
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        log.AppendLine($"{(valid ? "OK" : "UPDATED WITH WARNINGS")}: {rootName} TrackNoteVisual mode=SingleRenderer");
+        return valid;
+    }
+
+    private static bool ConfigureLongTrackNoteVisual(StringBuilder log)
+    {
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(LongPrefabPath) == null)
+        {
+            log.AppendLine($"ERROR: Missing {LongPrefabPath}");
+            return false;
+        }
+
+        GameObject root = PrefabUtility.LoadPrefabContents(LongPrefabPath);
+        bool valid = true;
+
+        try
+        {
+            TrackNoteVisual trackVisual = EnsureComponent<TrackNoteVisual>(root);
+            trackVisual.mode = TrackNoteVisualMode.LongNote;
+            trackVisual.headSprites = EnsureSpriteArraySize(trackVisual.headSprites);
+            trackVisual.tailSprites = EnsureSpriteArraySize(trackVisual.tailSprites);
+
+            Transform head = root.transform.Find("Head");
+            Transform tail = root.transform.Find("Tail");
+            SpriteRenderer headRenderer = head != null ? head.GetComponent<SpriteRenderer>() : null;
+            SpriteRenderer tailRenderer = tail != null ? tail.GetComponent<SpriteRenderer>() : null;
+
+            trackVisual.headRenderer = headRenderer;
+            trackVisual.tailRenderer = tailRenderer;
+
+            if (headRenderer == null || tailRenderer == null)
+            {
+                valid = false;
+                log.AppendLine($"ERROR: {LongPrefabPath} is missing Head or Tail SpriteRenderer.");
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, LongPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        log.AppendLine($"{(valid ? "OK" : "UPDATED WITH WARNINGS")}: LongNote_Art TrackNoteVisual mode=LongNote");
+        return valid;
+    }
+
+    private static bool ValidateSingleTrackNoteVisual(string prefabPath, string rootName, StringBuilder log)
+    {
+        bool valid = true;
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null)
+        {
+            log.AppendLine($"ERROR: Missing {prefabPath}");
+            return false;
+        }
+
+        log.AppendLine($"Prefab: {prefabPath}");
+        TrackNoteVisual trackVisual = prefab.GetComponent<TrackNoteVisual>();
+        if (trackVisual == null)
+        {
+            log.AppendLine($"  ERROR: {rootName} has no TrackNoteVisual component.");
+            return false;
+        }
+
+        if (trackVisual.mode != TrackNoteVisualMode.SingleRenderer)
+        {
+            valid = false;
+            log.AppendLine($"  ERROR: mode={trackVisual.mode}, expected SingleRenderer.");
+        }
+        else
+        {
+            log.AppendLine("  OK: mode=SingleRenderer");
+        }
+
+        if (trackVisual.mainRenderer == null)
+        {
+            valid = false;
+            log.AppendLine("  ERROR: mainRenderer is missing.");
+        }
+        else
+        {
+            log.AppendLine($"  OK: mainRenderer={trackVisual.mainRenderer.name}");
+        }
+
+        valid &= ValidateTrackSpriteArray(trackVisual.trackSprites, "trackSprites", log);
+        return valid;
+    }
+
+    private static bool ValidateLongTrackNoteVisual(StringBuilder log)
+    {
+        bool valid = true;
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LongPrefabPath);
+        if (prefab == null)
+        {
+            log.AppendLine($"ERROR: Missing {LongPrefabPath}");
+            return false;
+        }
+
+        log.AppendLine($"Prefab: {LongPrefabPath}");
+        TrackNoteVisual trackVisual = prefab.GetComponent<TrackNoteVisual>();
+        if (trackVisual == null)
+        {
+            log.AppendLine("  ERROR: LongNote_Art has no TrackNoteVisual component.");
+            return false;
+        }
+
+        if (trackVisual.mode != TrackNoteVisualMode.LongNote)
+        {
+            valid = false;
+            log.AppendLine($"  ERROR: mode={trackVisual.mode}, expected LongNote.");
+        }
+        else
+        {
+            log.AppendLine("  OK: mode=LongNote");
+        }
+
+        if (trackVisual.headRenderer == null)
+        {
+            valid = false;
+            log.AppendLine("  ERROR: headRenderer is missing.");
+        }
+        else
+        {
+            log.AppendLine($"  OK: headRenderer={trackVisual.headRenderer.name}");
+        }
+
+        if (trackVisual.tailRenderer == null)
+        {
+            valid = false;
+            log.AppendLine("  ERROR: tailRenderer is missing.");
+        }
+        else
+        {
+            log.AppendLine($"  OK: tailRenderer={trackVisual.tailRenderer.name}");
+        }
+
+        valid &= ValidateTrackSpriteArray(trackVisual.headSprites, "headSprites", log);
+        valid &= ValidateTrackSpriteArray(trackVisual.tailSprites, "tailSprites", log);
+        return valid;
+    }
+
+    private static bool ValidateTrackSpriteArray(Sprite[] sprites, string label, StringBuilder log)
+    {
+        if (sprites == null || sprites.Length < TrackVisualCount)
+        {
+            log.AppendLine($"  ERROR: {label} must contain {TrackVisualCount} entries.");
+            return false;
+        }
+
+        bool allAssigned = true;
+        for (int i = 0; i < TrackVisualCount; i++)
+        {
+            if (sprites[i] == null)
+            {
+                allAssigned = false;
+                log.AppendLine($"  WARNING: {label}[{i}] is empty. Drag the track {i} Sprite in Unity.");
+            }
+        }
+
+        if (allAssigned)
+        {
+            log.AppendLine($"  OK: {label} has {TrackVisualCount} assigned sprites.");
+        }
+
+        return true;
+    }
+
+    private static Sprite[] EnsureSpriteArraySize(Sprite[] sprites)
+    {
+        if (sprites != null && sprites.Length >= TrackVisualCount)
+        {
+            return sprites;
+        }
+
+        Sprite[] resizedSprites = new Sprite[TrackVisualCount];
+        if (sprites != null)
+        {
+            int copyCount = Mathf.Min(sprites.Length, TrackVisualCount);
+            for (int i = 0; i < copyCount; i++)
+            {
+                resizedSprites[i] = sprites[i];
+            }
+        }
+
+        return resizedSprites;
     }
 
     private static void WarnIfLongTailUsesSimpleDrawMode(Transform tail, StringBuilder log)

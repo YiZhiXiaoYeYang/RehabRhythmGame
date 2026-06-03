@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 2861559270978588068}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.29, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.24, y: 0.24, z: 0.24}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -94,6 +94,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3483835847845044709}
   - component: {fileID: 5220291314738167234}
+  - component: {fileID: 7899319100818991662}
   m_Layer: 0
   m_Name: StrongNote_Art
   m_TagString: Untagged
@@ -141,3 +142,34 @@ MonoBehaviour:
   noteSpeed: 5
   interactRadius: 1.5
   currentPhysicalLength: 0
+--- !u!114 &7899319100818991662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3838587827113866274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56ed4f90490bdc04a90c53ac6068ebf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  mainRenderer: {fileID: 5374745628289683703}
+  trackSprites:
+  - {fileID: 21300000, guid: 8e61d875baece2e4ab5c8771448c4859, type: 3}
+  - {fileID: 21300000, guid: 4be0998ea6c478e4d8e70ddd5aec1da8, type: 3}
+  - {fileID: 21300000, guid: 70aa7c9b1c647a448b485a58b8146a2f, type: 3}
+  - {fileID: 21300000, guid: f9707939657764b4a80bc82d1c96cf40, type: 3}
+  headRenderer: {fileID: 0}
+  tailRenderer: {fileID: 0}
+  headSprites:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  tailSprites:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}

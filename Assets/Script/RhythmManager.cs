@@ -40,6 +40,12 @@ public class RhythmManager : MonoBehaviour
     /// 判定距离（音符中心与判定区的距离小于此值则判定成功）
     /// </summary>
     public float interactRadius = 1.5f;
+
+    [Header("判定窗口")]
+    public float hitWindowX = 0.35f;
+    public float missWindowX = 0.55f;
+    public float holdStartWindowX = 0.35f;
+    public bool drawJudgmentGizmos = true;
     #endregion
 
     #region 游戏状态
@@ -185,8 +191,7 @@ public class RhythmManager : MonoBehaviour
             if (note.isJudged) continue; // 已判定的跳过
 
             // 检查头部是否在判定区内
-            float dist = Mathf.Abs(note.HeadX - judgementX);
-            if (dist <= interactRadius)
+            if (IsInHoldStartWindow(note))
             {
                 // 音符在判定区内，检查对应轨道键是否按下
                 if (InputManager.Instance.IsTrackPressed(note.trackID))
@@ -203,6 +208,55 @@ public class RhythmManager : MonoBehaviour
     {
         // 取消订阅输入事件
         UnsubscribeInputEvents();
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!drawJudgmentGizmos) return;
+
+        float centerX = judgmentArea != null ? judgmentArea.position.x : judgementX;
+        float minY = -3f;
+        float maxY = 3f;
+
+        if (trackTransforms != null && trackTransforms.Length > 0)
+        {
+            bool hasTrack = false;
+            for (int i = 0; i < trackTransforms.Length; i++)
+            {
+                if (trackTransforms[i] == null) continue;
+
+                float y = trackTransforms[i].position.y;
+                if (!hasTrack)
+                {
+                    minY = y;
+                    maxY = y;
+                    hasTrack = true;
+                }
+                else
+                {
+                    minY = Mathf.Min(minY, y);
+                    maxY = Mathf.Max(maxY, y);
+                }
+            }
+
+            if (hasTrack)
+            {
+                minY -= 0.5f;
+                maxY += 0.5f;
+            }
+        }
+
+        DrawJudgmentGizmoLine(centerX, minY, maxY, Color.green);
+        DrawJudgmentGizmoLine(centerX - hitWindowX, minY, maxY, Color.yellow);
+        DrawJudgmentGizmoLine(centerX + hitWindowX, minY, maxY, Color.yellow);
+        DrawJudgmentGizmoLine(centerX - missWindowX, minY, maxY, Color.red);
+        DrawJudgmentGizmoLine(centerX + missWindowX, minY, maxY, Color.red);
+    }
+
+    private void DrawJudgmentGizmoLine(float x, float minY, float maxY, Color color)
+    {
+        Gizmos.color = color;
+        Gizmos.DrawLine(new Vector3(x, minY, 0f), new Vector3(x, maxY, 0f));
     }
     #endregion
 
@@ -298,19 +352,15 @@ public class RhythmManager : MonoBehaviour
         if (activeNotes.Count == 0) return;
 
         // 查找对应轨道的第一个未判定音符
-        Note note = activeNotes.FirstOrDefault(n => n.trackID == trackID && !n.isJudged);
+        Note note = FindClosestUnjudgedNoteOnTrack(trackID);
 
         if (note == null) return;
 
         // 长按音符：检测头部是否在判定区内
         if (note.noteType == NoteType.Long)
         {
-            // 使用扩展容差（补偿延迟）
-            float moveDistanceDuringTapThreshold = note.moveSpeed * 0.2f;
-            float extendedRadius = interactRadius + moveDistanceDuringTapThreshold + 0.5f;
-
-            float dist = Mathf.Abs(note.HeadX - judgementX);
-            if (dist <= extendedRadius)
+            // 使用明确的长按头部判定窗口
+            if (IsInHoldStartWindow(note))
             {
                 note.isJudged = true;
                 note.isBeingHeld = true;
@@ -322,7 +372,7 @@ public class RhythmManager : MonoBehaviour
             }
             else
             {
-                Debug.Log($"[长按命中失败(短按)] dist: {dist:F2} > extendedRadius: {extendedRadius:F2}");
+                Debug.Log($"[长按命中失败(短按)] holdStartWindowX: {holdStartWindowX:F2}");
             }
             return;
         }
@@ -335,7 +385,7 @@ public class RhythmManager : MonoBehaviour
         }
 
         // 距离判定
-        if (CheckHit(note))
+        if (IsInHitWindow(note))
         {
             JudgementSuccess(note, "Perfect");
         }
@@ -351,19 +401,15 @@ public class RhythmManager : MonoBehaviour
         if (activeNotes.Count == 0) return;
 
         // 查找对应轨道的第一个未判定音符
-        Note note = activeNotes.FirstOrDefault(n => n.trackID == trackID && !n.isJudged);
+        Note note = FindClosestUnjudgedNoteOnTrack(trackID);
 
         if (note == null) return;
 
         // 长按音符也响应大力点击
         if (note.noteType == NoteType.Long)
         {
-            // 使用扩展容差
-            float moveDistanceDuringTapThreshold = note.moveSpeed * 0.2f;
-            float extendedRadius = interactRadius + moveDistanceDuringTapThreshold + 0.5f;
-
-            float dist = Mathf.Abs(note.HeadX - judgementX);
-            if (dist <= extendedRadius)
+            // 使用明确的长按头部判定窗口
+            if (IsInHoldStartWindow(note))
             {
                 note.isJudged = true;
                 note.isBeingHeld = true;
@@ -375,7 +421,7 @@ public class RhythmManager : MonoBehaviour
             }
             else
             {
-                Debug.Log($"[长按命中失败(大力)] dist: {dist:F2} > extendedRadius: {extendedRadius:F2}");
+                Debug.Log($"[长按命中失败(大力)] holdStartWindowX: {holdStartWindowX:F2}");
             }
             return;
         }
@@ -386,7 +432,7 @@ public class RhythmManager : MonoBehaviour
             return;
         }
 
-        if (CheckHit(note))
+        if (IsInHitWindow(note))
         {
             JudgementSuccess(note, "Perfect");
         }
@@ -406,7 +452,10 @@ public class RhythmManager : MonoBehaviour
         }
 
         // 查找对应轨道的未判定长按音符
-        Note note = activeNotes.FirstOrDefault(n => n.trackID == trackID && !n.isJudged && n.noteType == NoteType.Long);
+        Note note = activeNotes
+            .Where(n => n.trackID == trackID && !n.isJudged && n.noteType == NoteType.Long)
+            .OrderBy(n => Mathf.Abs(n.HeadX - judgementX))
+            .FirstOrDefault();
 
         if (note == null)
         {
@@ -418,14 +467,7 @@ public class RhythmManager : MonoBehaviour
             return;
         }
 
-        // 使用扩展容差（补偿0.2秒按键延迟导致的音符移动距离）
-        float moveDistanceDuringTapThreshold = note.moveSpeed * 0.2f;
-        float extendedRadius = interactRadius + moveDistanceDuringTapThreshold + 0.5f;
-
-        float dist = Mathf.Abs(note.HeadX - judgementX);
-        Debug.Log($"[长按] note.HeadX={note.HeadX:F2}, judgementX={judgementX:F2}, dist={dist:F2}, extendedRadius={extendedRadius:F2}, moveSpeed={note.moveSpeed}");
-
-        if (dist <= extendedRadius)
+        if (IsInHoldStartWindow(note))
         {
             note.isJudged = true;
             note.isBeingHeld = true;
@@ -438,7 +480,7 @@ public class RhythmManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[长按头部拦截失败] dist: {dist:F2} > extendedRadius: {extendedRadius:F2}");
+            Debug.Log($"[长按头部拦截失败] holdStartWindowX: {holdStartWindowX:F2}");
         }
     }
 
@@ -456,6 +498,20 @@ public class RhythmManager : MonoBehaviour
     private void OnHoldEndHandler(int trackID)
     {
         Debug.Log($"[长按] 轨道{trackID}长按结束");
+
+        Note note = activeNotes.FirstOrDefault(n =>
+            n.trackID == trackID &&
+            n.noteType == NoteType.Long &&
+            n.isBeingHeld);
+
+        if (note != null)
+        {
+            ReleaseHeldLongNote(note, "OnHoldEnd");
+        }
+        else
+        {
+            Debug.Log($"[长按] 轨道{trackID}没有正在长按的音符");
+        }
     }
     #endregion
 
@@ -489,7 +545,14 @@ public class RhythmManager : MonoBehaviour
 
             // 规则3：头部漏判（已越界且未被判定）
             // 必须在规则5之前检查
-            if (!note.isJudged && note.HeadX < judgementX - interactRadius)
+            if (note.isBeingHeld &&
+                InputManager.Instance != null &&
+                !InputManager.Instance.IsTrackPressed(note.trackID))
+            {
+                ReleaseHeldLongNote(note, "InputManager fallback: key not pressed");
+            }
+
+            if (!note.isJudged && note.HeadX < judgementX - missWindowX)
             {
                 note.isJudged = true;
                 note.isBeingHeld = false;
@@ -501,7 +564,7 @@ public class RhythmManager : MonoBehaviour
             }
 
             // 规则5：音符对象完全越界 -> 销毁（唯一的销毁条件）
-            if (note.TailX < judgementX - interactRadius)
+            if (note.TailX < judgementX - missWindowX)
             {
                 // 注意：特效已在规则A或规则B中提前停止，这里只销毁对象
                 if (note.isBeingHeld)
@@ -527,7 +590,7 @@ public class RhythmManager : MonoBehaviour
             // 规则2+5：已判定且头部在判定区内 -> 持续加分
             if (note.isJudged)
             {
-                bool headInZone = note.HeadX > judgementX - interactRadius;
+                bool headInZone = note.HeadX > judgementX - missWindowX;
                 if (headInZone && InputManager.Instance != null && InputManager.Instance.IsTrackHolding(note.trackID))
                 {
                     combo++;
@@ -556,7 +619,7 @@ public class RhythmManager : MonoBehaviour
         float noteX = note.GetJudgementX();
         float distance = judgementX - noteX;
 
-        if (distance > interactRadius)
+        if (distance > missWindowX)
         {
             Debug.Log($"[Miss] 普通音符类型: {note.noteType}");
             combo = 0;
@@ -572,20 +635,57 @@ public class RhythmManager : MonoBehaviour
     /// </summary>
     private bool CheckHit(Note note)
     {
-        float noteX = note.GetJudgementX();
-        float xDistance = Mathf.Abs(noteX - judgementX);
-        Debug.Log($"[判定] xDistance: {xDistance:F2}, interactRadius: {interactRadius:F2}");
+        return IsInHitWindow(note);
+    }
 
-        if (xDistance <= interactRadius)
+    private Note FindClosestUnjudgedNoteOnTrack(int trackID)
+    {
+        return activeNotes
+            .Where(n => n != null && n.trackID == trackID && !n.isJudged)
+            .OrderBy(n => Mathf.Abs(n.GetJudgementX() - judgementX))
+            .FirstOrDefault();
+    }
+
+    private bool IsInHitWindow(Note note)
+    {
+        if (note == null) return false;
+
+        float xDistance = Mathf.Abs(note.GetJudgementX() - judgementX);
+        Debug.Log($"[判定] xDistance: {xDistance:F2}, hitWindowX: {hitWindowX:F2}");
+        return xDistance <= hitWindowX;
+    }
+
+    private bool IsInHoldStartWindow(Note note)
+    {
+        if (note == null) return false;
+
+        float xDistance = Mathf.Abs(note.HeadX - judgementX);
+        Debug.Log($"[长按判定] xDistance: {xDistance:F2}, holdStartWindowX: {holdStartWindowX:F2}");
+        return xDistance <= holdStartWindowX;
+    }
+
+    private void ReleaseHeldLongNote(Note note, string reason)
+    {
+        if (note == null) return;
+        if (note.noteType != NoteType.Long) return;
+        if (!note.isBeingHeld) return;
+
+        note.isBeingHeld = false;
+        note.isJudged = true;
+
+        if (EffectManager.Instance != null)
         {
-            Debug.Log($"[判定成功] xDistance: {xDistance:F2} <= interactRadius: {interactRadius:F2}");
-            return true;
+            EffectManager.Instance.StopHoldSpark(note.trackID);
         }
-        else
+
+        combo = 0;
+
+        if (AudioManager.Instance != null)
         {
-            Debug.Log($"[判定失败] xDistance: {xDistance:F2} > interactRadius: {interactRadius:F2}");
-            return false;
+            AudioManager.Instance.PlayMiss();
         }
+
+        Debug.Log($"[长按释放] trackID={note.trackID}, reason={reason}, currentPhysicalLength={note.currentPhysicalLength:F2}");
     }
 
     #endregion
@@ -622,7 +722,7 @@ public class RhythmManager : MonoBehaviour
         if (note.isJudged) return;
 
         // 使用 IsPassedX 方法：长按音符必须尾部完全越界才算 Miss
-        if (note.IsPassedX(judgementX - interactRadius))
+        if (note.IsPassedX(judgementX - missWindowX))
         {
             // 如果是长按且正在按压中Miss，额外扣分
             if (note.noteType == NoteType.Long && note.isBeingHeld)
