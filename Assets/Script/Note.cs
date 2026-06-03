@@ -25,6 +25,11 @@ public class Note : MonoBehaviour
     public NoteType noteType;
 
     /// <summary>
+    /// 是否使用测试用自动改色。正式美术 Prefab 保持 false，避免覆盖 Sprite 颜色。
+    /// </summary>
+    public bool useDebugColor = false;
+
+    /// <summary>
     /// 移动速度（单位/秒）
     /// </summary>
     public float moveSpeed = 5f;
@@ -92,6 +97,26 @@ public class Note : MonoBehaviour
     private float originalWidth = 1f;
 
     /// <summary>
+    /// 长按拖尾的 SpriteRenderer 缓存，用于 Sliced/Tiled 模式下修改 size.x。
+    /// </summary>
+    private SpriteRenderer tailSpriteRenderer;
+
+    /// <summary>
+    /// 长按拖尾的基础本地缩放。Sliced/Tiled 模式下保持这个值不变。
+    /// </summary>
+    private Vector3 tailBaseLocalScale = Vector3.one;
+
+    /// <summary>
+    /// Sliced/Tiled 拖尾的原始高度，避免更新长度时改变高度。
+    /// </summary>
+    private float originalTailSpriteHeight = 1f;
+
+    /// <summary>
+    /// 是否使用 SpriteRenderer.size.x 更新拖尾长度。
+    /// </summary>
+    private bool useSlicedTail = false;
+
+    /// <summary>
     /// 当前剩余物理长度
     /// </summary>
     public float currentPhysicalLength = 0f;
@@ -125,7 +150,10 @@ public class Note : MonoBehaviour
     private void Start()
     {
         // 初始化：根据类型设置颜色以便区分（仅用于测试）
-        InitializeVisual();
+        if (useDebugColor)
+        {
+            InitializeVisual();
+        }
     }
 
     private void Update()
@@ -243,20 +271,43 @@ public class Note : MonoBehaviour
         if (type == NoteType.Long)
         {
             currentPhysicalLength = length * speed;
+            useSlicedTail = false;
 
             // 有拖尾组件时才调整视觉
             if (tailTransform != null)
             {
-                // 获取图片原始宽度
-                SpriteRenderer sr = tailTransform.GetComponent<SpriteRenderer>();
-                if (sr != null && sr.sprite != null)
+                tailBaseLocalScale = tailTransform.localScale;
+                tailSpriteRenderer = tailTransform.GetComponent<SpriteRenderer>();
+                if (tailSpriteRenderer != null)
                 {
-                    originalWidth = sr.sprite.bounds.size.x;
+                    useSlicedTail = tailSpriteRenderer.drawMode != SpriteDrawMode.Simple;
+                    if (useSlicedTail)
+                    {
+                        originalTailSpriteHeight = tailSpriteRenderer.size.y;
+                    }
+
+                    if (tailSpriteRenderer.sprite != null)
+                    {
+                        originalWidth = tailSpriteRenderer.sprite.bounds.size.x;
+                    }
+
+                    if (useSlicedTail && originalTailSpriteHeight <= 0.001f && tailSpriteRenderer.sprite != null)
+                    {
+                        originalTailSpriteHeight = tailSpriteRenderer.sprite.bounds.size.y;
+                    }
                 }
+
                 if (originalWidth <= 0.001f)
                 {
                     originalWidth = 1f;
                 }
+
+                if (originalTailSpriteHeight <= 0.001f)
+                {
+                    originalTailSpriteHeight = 1f;
+                }
+
+                Debug.Log($"[Note] LongNote Tail setup: drawMode={(tailSpriteRenderer != null ? tailSpriteRenderer.drawMode.ToString() : "No SpriteRenderer")}, useSlicedTail={useSlicedTail}, tailBaseLocalScale={tailBaseLocalScale}, originalTailSpriteHeight={originalTailSpriteHeight:F3}");
 
                 // 调用 UpdateTailVisuals 初始化视觉
                 UpdateTailVisuals();
@@ -270,6 +321,25 @@ public class Note : MonoBehaviour
     public void UpdateTailVisuals()
     {
         if (tailTransform == null) return;
+
+        if (tailSpriteRenderer == null)
+        {
+            tailSpriteRenderer = tailTransform.GetComponent<SpriteRenderer>();
+        }
+
+        if (useSlicedTail && tailSpriteRenderer != null)
+        {
+            tailTransform.localScale = tailBaseLocalScale;
+
+            float safeScaleX = Mathf.Max(0.0001f, Mathf.Abs(tailBaseLocalScale.x));
+            float visualSizeX = currentPhysicalLength / safeScaleX;
+            tailSpriteRenderer.size = new Vector2(visualSizeX, originalTailSpriteHeight);
+
+            Vector3 slicedPos = tailTransform.localPosition;
+            slicedPos.x = currentPhysicalLength / 2f;
+            tailTransform.localPosition = slicedPos;
+            return;
+        }
 
         // 缩放：当前长度 / 原始宽度
         Vector3 scale = tailTransform.localScale;

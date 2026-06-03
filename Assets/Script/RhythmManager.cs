@@ -317,7 +317,7 @@ public class RhythmManager : MonoBehaviour
                 combo++;
                 score += 100 * combo;
                 EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
-                EffectManager.Instance.StartHoldSpark(note.trackID, judgmentArea.position);
+                EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
                 Debug.Log($"[长按命中头部(短按)] combo: {combo}, score: {score}");
             }
             else
@@ -370,7 +370,7 @@ public class RhythmManager : MonoBehaviour
                 combo++;
                 score += 100 * combo;
                 EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
-                EffectManager.Instance.StartHoldSpark(note.trackID, judgmentArea.position);
+                EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
                 Debug.Log($"[长按命中头部(大力)] combo: {combo}, score: {score}");
             }
             else
@@ -433,7 +433,7 @@ public class RhythmManager : MonoBehaviour
             score += 100 * combo;
             AudioManager.Instance.PlayLongHit();
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
-            EffectManager.Instance.StartHoldSpark(note.trackID, note.transform.position);
+            EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
             Debug.Log($"[长按头部拦截成功] combo: {combo}, score: {score}");
         }
         else
@@ -590,6 +590,25 @@ public class RhythmManager : MonoBehaviour
 
     #endregion
 
+    #region 特效位置
+    private Vector3 GetJudgmentEffectPosition(Note note)
+    {
+        float effectY = note != null ? note.transform.position.y : 0f;
+        float effectZ = note != null ? note.transform.position.z : 0f;
+
+        if (note != null &&
+            trackTransforms != null &&
+            note.trackID >= 0 &&
+            note.trackID < trackTransforms.Length &&
+            trackTransforms[note.trackID] != null)
+        {
+            effectY = trackTransforms[note.trackID].position.y;
+        }
+
+        return new Vector3(judgementX, effectY, effectZ);
+    }
+    #endregion
+
     #region Miss判定
     /// <summary>
     /// 检查并处理Miss的音符
@@ -648,14 +667,14 @@ public class RhythmManager : MonoBehaviour
         {
             baseScore = 100;
             AudioManager.Instance.PlayNormalHit();
-            EffectManager.Instance.PlayNormalSpark(note.transform.position);
+            EffectManager.Instance.PlayNormalSpark(GetJudgmentEffectPosition(note));
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
         }
         else if (note.noteType == NoteType.Strong)
         {
             baseScore = 200;
             AudioManager.Instance.PlayStrongHit();
-            EffectManager.Instance.PlayStrongSpark(note.transform.position);
+            EffectManager.Instance.PlayStrongSpark(GetJudgmentEffectPosition(note));
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
         }
 
