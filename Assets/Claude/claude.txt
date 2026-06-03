@@ -1,0 +1,89 @@
+一、 项目简介 (Project Overview)
+本项目是一款专门用于医疗康复训练的下落式（横向滚动，基于 X 轴）音乐节奏游戏。
+与传统音游最大的不同在于，本游戏将接入柔性压力传感器作为输入设备。玩家不仅需要踩准节奏，还需要控制按压的“力量大小”来完成特定的判定，从而达到手部力量康复训练的目的。
+
+二、 核心机制与玩法 (Core Mechanics)
+轨道系统：共 4 条轨道（Track 0~3）。
+
+音符类型 (Note Types)：
+
+普通单按 (Normal)：需要轻巧准确地点击。
+
+大力单按 (Strong)：需要使用较大的力量按压（用于力量爆发训练）。
+
+长按 (Long)：按下后需保持按压状态直到音符结束（用于持久力训练）。
+
+视觉与判定：
+
+采用“距离队列法”进行判定，计算音符 X 坐标与判定线中心 X 坐标的差值。
+
+长按高级表现：采用主流音游的标准表现——按住时音符头部冻结在判定线（不再移动），拖尾部分随着时间持续缩短；中途松手则拖尾带着残躯继续移动并判为 Miss。
+
+三、 当前已完成进度 (Completed Milestones)
+1. 基础判定与生成 (RhythmManager & Note)
+[x] JSON 谱面解析与音符生成逻辑跑通。
+
+[x] 基于 4 条轨道的独立 Y 轴定位与 X 轴移动逻辑。
+
+[x] 核心的命中判定（单按、大力、长按头部拦截、长按越界漏判）。
+
+[x] 重构了长按音符的物理缩短机制 (Shrink 与 currentPhysicalLength)。
+
+2. 音频系统 (AudioManager)
+[x] 搭建了全局的 AudioManager 单例。
+
+[x] 实装了无版权高质量打击音效（普通=click3, 大力=impactWood_heavy, 长按头部=switch2, Miss=minimize_001）。
+
+[x] 彻底解决了 Unity 音游常见的音频延迟问题（调整了 DSP Buffer、音频加载方式 Decompress On Load 及切除了静音前摇）。
+
+3. 视觉与特效系统 (EffectManager & JudgmentVisualizer)
+[x] 实现了分轨道的按键视觉反馈（按下时对应轨道的判定圈放大并改变颜色）。
+
+[x] 制作并实装了粒子特效预制体：
+
+普通命中 (HitSpark_Normal)：单次爆发，层级 100。
+
+大力命中 (HitSpark_Strong)：更猛烈的单次爆发。
+
+长按持续 (HitSpark_Hold)：循环喷射，中途松手或完美结束时平滑调用 .Stop() 熄火。
+
+[x] 解决了特效坐标错位、图层被遮挡、长按特效与生命周期绑定导致的销毁异常等 Bug。
+
+4. 输入系统改进 (InputManager)
+[x] 已初步剥离全局输入状态，正向“分轨独立检测按键”的方向重构，以解决多键同按/长按期间误判断连的问题。
+
+四、 下一步计划 (Next Steps / TODO)
+本项目接下来的开发重点将按以下顺序展开：
+
+机制深化：多级判定系统 (Multi-tier Judgment)
+
+将目前的单一判定（判定区内即得分）升级为 Perfect / Great / Good / Miss 多级区间，并根据精准度给予不同分数。
+
+硬件接入：串口通信与压力传感器
+
+编写 SerialPortManager 读取 Arduino/ESP32 的模拟量数据。
+
+制作力量校准系统 (Calibration)，记录患者的最大握力 (MaxForce)，以此为基准动态设定“大力单按”的触发阈值。
+
+UI 与外围系统 (Game Loop & UI)
+
+添加打击反馈艺术字（Perfect/Miss 浮动动画）和 Combo 数字弹动动画。
+
+制作选曲菜单 (Song Select) 和游戏结算统计界面 (Result Screen)。
+
+平滑长按机制 (Smooth Hold)
+
+增加对长按期间“压力保持平稳”的要求，压力过大或过小都算断连（高级康复功能）。
+
+五、 核心代码脚本架构参考
+RhythmManager.cs：大总管。负责读取谱面、生成 Note、每帧推进音符移动、处理命中判定逻辑。
+
+Note.cs：挂载在每个音符预制体上。保存音符类型、轨道ID、当前物理长度等状态，并提供修改自身视觉表现的 Shrink 方法。
+
+InputManager.cs：管理玩家输入（目前是键盘，未来接入传感器）。负责将原始输入转化为游戏的 Tap/StrongTap/Hold 信号。
+
+AudioManager.cs：负责所有的打击音效播放 (PlayOneShot)。
+
+EffectManager.cs：负责在指定坐标生成粒子特效，以及调用特定轨道的按键闪烁。
+
+JudgmentVisualizer.cs：挂载在 4 个轨道判定圈上的脚本，控制按下时的颜色和缩放动画。
