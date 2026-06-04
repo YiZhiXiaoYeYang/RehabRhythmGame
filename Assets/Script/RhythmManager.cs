@@ -59,6 +59,15 @@ public class RhythmManager : MonoBehaviour
     /// 当前连击数
     /// </summary>
     public int combo = 0;
+
+    [Header("Combo Settings")]
+    public int normalComboGain = 1;
+    public int strongComboGain = 2;
+    public int longHeadComboGain = 1;
+    public bool enableLongHoldComboTick = true;
+    public float longHoldComboInterval = 1f;
+    public int longHoldTickComboGain = 1;
+    public int longHoldTickScore = 10;
     #endregion
 
     #region 轨道设置
@@ -130,6 +139,10 @@ public class RhythmManager : MonoBehaviour
     /// 整张谱子共用的随机轨道（-1表示不随机）
     /// </summary>
     private int randomTrackForBeatmap = -1;
+
+    private int hitCount = 0;
+    private int missCount = 0;
+    private Dictionary<Note, float> longHoldLastComboTickTimes = new Dictionary<Note, float>();
     #endregion
 
     #region Unity生命周期
@@ -364,7 +377,9 @@ public class RhythmManager : MonoBehaviour
             {
                 note.isJudged = true;
                 note.isBeingHeld = true;
-                combo++;
+                RegisterHit(note, "Long head tap");
+                PrepareLongHoldComboTick(note);
+                AddCombo(longHeadComboGain, "Long head tap");
                 score += 100 * combo;
                 EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
                 EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
@@ -413,7 +428,9 @@ public class RhythmManager : MonoBehaviour
             {
                 note.isJudged = true;
                 note.isBeingHeld = true;
-                combo++;
+                RegisterHit(note, "Long head strong tap");
+                PrepareLongHoldComboTick(note);
+                AddCombo(longHeadComboGain, "Long head strong tap");
                 score += 100 * combo;
                 EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
                 EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
@@ -471,7 +488,9 @@ public class RhythmManager : MonoBehaviour
         {
             note.isJudged = true;
             note.isBeingHeld = true;
-            combo++;
+            RegisterHit(note, "Long head hold start");
+            PrepareLongHoldComboTick(note);
+            AddCombo(longHeadComboGain, "Long head hold start");
             score += 100 * combo;
             AudioManager.Instance.PlayLongHit();
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
@@ -538,6 +557,7 @@ public class RhythmManager : MonoBehaviour
             {
                 note.isBeingHeld = false;
                 note.isJudged = true;  // 标记为已完成
+                ClearLongHoldComboTick(note);
                 EffectManager.Instance.StopHoldSpark(note.trackID);
                 Debug.Log($"[长按完成] 音符完美结束，combo: {combo}");
                 // 不在这里销毁，让音符继续移动直到越界
@@ -556,10 +576,12 @@ public class RhythmManager : MonoBehaviour
             {
                 note.isJudged = true;
                 note.isBeingHeld = false;
+                ClearLongHoldComboTick(note);
                 EffectManager.Instance.StopHoldSpark(note.trackID);
                 Debug.Log($"[Miss] 长按头部漏判");
                 combo = 0;
                 AudioManager.Instance.PlayMiss();
+                RegisterMiss(note, "Long head missed");
                 continue;
             }
 
@@ -581,22 +603,17 @@ public class RhythmManager : MonoBehaviour
                     note.isJudged = true;
                     Debug.Log($"[Miss] 长按音符头部漏判");
                     combo = 0;
+                    RegisterMiss(note, "Long tail passed unjudged");
                 }
                 RemoveNote(note);
                 i--;
                 continue;
             }
 
-            // 规则2+5：已判定且头部在判定区内 -> 持续加分
-            if (note.isJudged)
+            // 规则2+5：已判定且正在长按 -> 按固定间隔增加 combo
+            if (note.isJudged && note.isBeingHeld)
             {
-                bool headInZone = note.HeadX > judgementX - missWindowX;
-                if (headInZone && InputManager.Instance != null && InputManager.Instance.IsTrackHolding(note.trackID))
-                {
-                    combo++;
-                    score += 10;
-                    // Debug.Log($"[长按连击] combo: {combo}, score: {score}");
-                }
+                ProcessLongHoldComboTick(note);
             }
         }
     }
@@ -624,6 +641,7 @@ public class RhythmManager : MonoBehaviour
             Debug.Log($"[Miss] 普通音符类型: {note.noteType}");
             combo = 0;
             AudioManager.Instance.PlayMiss();
+            RegisterMiss(note, $"{note.noteType} missed");
             RemoveNote(note);
         }
     }
@@ -672,6 +690,7 @@ public class RhythmManager : MonoBehaviour
 
         note.isBeingHeld = false;
         note.isJudged = true;
+        ClearLongHoldComboTick(note);
 
         if (EffectManager.Instance != null)
         {
@@ -685,7 +704,88 @@ public class RhythmManager : MonoBehaviour
             AudioManager.Instance.PlayMiss();
         }
 
+        RegisterMiss(note, reason);
         Debug.Log($"[长按释放] trackID={note.trackID}, reason={reason}, currentPhysicalLength={note.currentPhysicalLength:F2}");
+    }
+
+    private void RegisterHit(Note note, string reason)
+    {
+        hitCount++;
+        Debug.Log($"[HUD Stats] Hit +1 ({reason}) hit={hitCount}, miss={missCount}, beat={GetBeatCount()}");
+    }
+
+    private void RegisterMiss(Note note, string reason)
+    {
+        missCount++;
+        Debug.Log($"[HUD Stats] Miss +1 ({reason}) hit={hitCount}, miss={missCount}, beat={GetBeatCount()}");
+    }
+
+    private float GetComboTickTime()
+    {
+        if (bgmSource != null)
+        {
+            return bgmSource.time;
+        }
+
+        return Time.time;
+    }
+
+    private void PrepareLongHoldComboTick(Note note)
+    {
+        if (note == null) return;
+        longHoldLastComboTickTimes[note] = GetComboTickTime();
+    }
+
+    private void ClearLongHoldComboTick(Note note)
+    {
+        if (note == null) return;
+        if (longHoldLastComboTickTimes.ContainsKey(note))
+        {
+            longHoldLastComboTickTimes.Remove(note);
+        }
+    }
+
+    private void AddCombo(int amount, string reason)
+    {
+        if (amount <= 0) return;
+
+        combo += amount;
+        Debug.Log($"[Combo] +{amount} ({reason}) combo={combo}");
+    }
+
+    private void ProcessLongHoldComboTick(Note note)
+    {
+        if (!enableLongHoldComboTick) return;
+        if (note == null) return;
+        if (note.noteType != NoteType.Long) return;
+        if (!note.isBeingHeld) return;
+
+        if (InputManager.Instance == null) return;
+        if (!InputManager.Instance.IsTrackHolding(note.trackID)) return;
+
+        float interval = Mathf.Max(0.01f, longHoldComboInterval);
+        float now = GetComboTickTime();
+
+        if (!longHoldLastComboTickTimes.TryGetValue(note, out float lastTime))
+        {
+            longHoldLastComboTickTimes[note] = now;
+            return;
+        }
+
+        float elapsed = now - lastTime;
+        if (elapsed < interval) return;
+
+        int tickCount = Mathf.FloorToInt(elapsed / interval);
+        int comboGain = longHoldTickComboGain * tickCount;
+
+        AddCombo(comboGain, $"Long hold tick x{tickCount}");
+
+        if (longHoldTickScore > 0)
+        {
+            score += longHoldTickScore * tickCount;
+        }
+
+        longHoldLastComboTickTimes[note] = lastTime + interval * tickCount;
     }
 
     #endregion
@@ -736,6 +836,7 @@ public class RhythmManager : MonoBehaviour
                 Debug.Log($"[Miss] 音符类型: {note.noteType}");
                 combo = 0;
             }
+            RegisterMiss(note, $"{note.noteType} passed miss line");
             RemoveNote(note);
         }
     }
@@ -760,12 +861,14 @@ public class RhythmManager : MonoBehaviour
 
         // 普通/大力音符直接销毁
         note.isJudged = true;
+        RegisterHit(note, $"{note.noteType} hit");
 
         int baseScore = 0;
 
         if (note.noteType == NoteType.Normal)
         {
             baseScore = 100;
+            AddCombo(normalComboGain, "Normal hit");
             AudioManager.Instance.PlayNormalHit();
             EffectManager.Instance.PlayNormalSpark(GetJudgmentEffectPosition(note));
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
@@ -773,12 +876,12 @@ public class RhythmManager : MonoBehaviour
         else if (note.noteType == NoteType.Strong)
         {
             baseScore = 200;
+            AddCombo(strongComboGain, "Strong hit");
             AudioManager.Instance.PlayStrongHit();
             EffectManager.Instance.PlayStrongSpark(GetJudgmentEffectPosition(note));
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
         }
 
-        combo++;
         score += baseScore * combo;
 
         Debug.Log($"[{rating}] 命中 {note.noteType} 音符! +{baseScore * combo} 分 (combo: {combo})");
@@ -795,6 +898,7 @@ public class RhythmManager : MonoBehaviour
     {
         if (activeNotes.Contains(note))
         {
+            ClearLongHoldComboTick(note);
             activeNotes.Remove(note);
             Destroy(note.gameObject);
         }
@@ -809,6 +913,9 @@ public class RhythmManager : MonoBehaviour
     {
         // 清空待生成队列和活跃音符（防止重复加载时累积）
         pendingNotes.Clear();
+        hitCount = 0;
+        missCount = 0;
+        longHoldLastComboTickTimes.Clear();
         for (int i = activeNotes.Count - 1; i >= 0; i--)
         {
             if (activeNotes[i] != null) Destroy(activeNotes[i].gameObject);
@@ -1036,6 +1143,9 @@ public class RhythmManager : MonoBehaviour
     #region 公共接口
     public int GetScore() => score;
     public int GetCombo() => combo;
+    public int GetHitCount() => hitCount;
+    public int GetMissCount() => missCount;
+    public int GetBeatCount() => hitCount + missCount;
     public int GetActiveNoteCount() => activeNotes.Count;
     #endregion
 
