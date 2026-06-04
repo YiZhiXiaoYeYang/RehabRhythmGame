@@ -104,6 +104,11 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
+        if (PauseManager.IsPaused)
+        {
+            return;
+        }
+
         // 更新按键配置数组（支持运行时调整）
         trackKeys[0] = track0Key;
         trackKeys[1] = track1Key;
