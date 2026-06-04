@@ -870,7 +870,7 @@ public class RhythmManager : MonoBehaviour
             baseScore = 100;
             AddCombo(normalComboGain, "Normal hit");
             AudioManager.Instance.PlayNormalHit();
-            EffectManager.Instance.PlayNormalSpark(GetJudgmentEffectPosition(note));
+            EffectManager.Instance.PlayNormalSpark(GetJudgmentEffectPosition(note), note.trackID);
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
         }
         else if (note.noteType == NoteType.Strong)
@@ -878,7 +878,7 @@ public class RhythmManager : MonoBehaviour
             baseScore = 200;
             AddCombo(strongComboGain, "Strong hit");
             AudioManager.Instance.PlayStrongHit();
-            EffectManager.Instance.PlayStrongSpark(GetJudgmentEffectPosition(note));
+            EffectManager.Instance.PlayStrongSpark(GetJudgmentEffectPosition(note), note.trackID);
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
         }
 

@@ -8,6 +8,15 @@ public class EffectManager : MonoBehaviour
     public GameObject normalSparkPrefab;
     public GameObject strongSparkPrefab;
     public GameObject holdSparkPrefab; // 新增：长按持续火花
+
+    [Header("Track Particle Colors")]
+    public Color[] trackColors = new Color[4]
+    {
+        new Color32(0xB8, 0x23, 0x60, 0xFF),
+        new Color32(0xEE, 0x79, 0x36, 0xFF),
+        new Color32(0x00, 0x70, 0x68, 0xFF),
+        new Color32(0x26, 0x2F, 0x57, 0xFF)
+    };
     
     [Header("4条轨道的判定区视觉脚本 (按0,1,2,3顺序拖入)")]
     public JudgmentVisualizer[] trackVisuals; 
@@ -23,14 +32,32 @@ public class EffectManager : MonoBehaviour
 
     public void PlayNormalSpark(Vector3 position)
     {
+        PlayNormalSpark(position, 0);
+    }
+
+    public void PlayNormalSpark(Vector3 position, int trackID)
+    {
         if (normalSparkPrefab != null)
-            Instantiate(normalSparkPrefab, position, Quaternion.identity);
+        {
+            GameObject sparkObject = Instantiate(normalSparkPrefab, position, Quaternion.identity);
+            ApplyParticleColor(sparkObject, trackID);
+            PlayParticleSystems(sparkObject);
+        }
     }
 
     public void PlayStrongSpark(Vector3 position)
     {
+        PlayStrongSpark(position, 0);
+    }
+
+    public void PlayStrongSpark(Vector3 position, int trackID)
+    {
         if (strongSparkPrefab != null)
-            Instantiate(strongSparkPrefab, position, Quaternion.identity);
+        {
+            GameObject sparkObject = Instantiate(strongSparkPrefab, position, Quaternion.identity);
+            ApplyParticleColor(sparkObject, trackID);
+            PlayParticleSystems(sparkObject);
+        }
     }
 
     /// <summary>
@@ -45,7 +72,76 @@ public class EffectManager : MonoBehaviour
 
             // 生成新的长按特效
             GameObject sparkObj = Instantiate(holdSparkPrefab, position, Quaternion.identity);
-            activeHoldSparks[trackIndex] = sparkObj.GetComponent<ParticleSystem>();
+            ApplyParticleColor(sparkObj, trackIndex);
+            PlayParticleSystems(sparkObj);
+            activeHoldSparks[trackIndex] = sparkObj.GetComponentInChildren<ParticleSystem>();
+        }
+    }
+
+    private Color GetTrackColor(int trackID)
+    {
+        if (trackColors != null && trackID >= 0 && trackID < trackColors.Length)
+        {
+            return trackColors[trackID];
+        }
+
+        Debug.LogWarning($"[EffectManager] Invalid trackID {trackID} for particle color. Using white.", this);
+        return Color.white;
+    }
+
+    private void ApplyParticleColor(GameObject particleObject, int trackID)
+    {
+        if (particleObject == null)
+        {
+            return;
+        }
+
+        Color trackColor = GetTrackColor(trackID);
+        ParticleSystem[] particleSystems = particleObject.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            ParticleSystem particleSystem = particleSystems[i];
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            ParticleSystem.MainModule main = particleSystem.main;
+            main.startColor = trackColor;
+
+            ParticleSystem.ColorOverLifetimeModule colorOverLifetime = particleSystem.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+
+            Gradient gradient = new Gradient();
+            gradient.SetKeys(
+                new GradientColorKey[]
+                {
+                    new GradientColorKey(trackColor, 0f),
+                    new GradientColorKey(trackColor, 1f)
+                },
+                new GradientAlphaKey[]
+                {
+                    new GradientAlphaKey(1f, 0f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            colorOverLifetime.color = gradient;
+        }
+    }
+
+    private void PlayParticleSystems(GameObject particleObject)
+    {
+        if (particleObject == null)
+        {
+            return;
+        }
+
+        ParticleSystem[] particleSystems = particleObject.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            if (particleSystems[i] != null)
+            {
+                particleSystems[i].Play();
+            }
         }
     }
 
