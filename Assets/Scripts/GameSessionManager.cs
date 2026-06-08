@@ -4,7 +4,8 @@ public class GameSessionManager : MonoBehaviour
 {
     public static GameSessionManager Instance { get; private set; }
 
-    public int selectedSongIndex = 0;
+    public int selectedSongIndex = -1;
+    public string selectedSongId = "";
     public string selectedSongTitle = "";
     public string selectedHand = "Left";
     public string selectedFinger = "Index";

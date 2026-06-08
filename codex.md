@@ -1,8 +1,10 @@
-# CODEX.md — Rehab Rhythm Game 项目协作说明
+# CODEX.md - Rehab Rhythm Game 项目协作说明
 
-> 本文件是给 Codex 的长期项目上下文。每次让 Codex 修改项目时，请先 `@CODEX.md`，并要求 Codex 严格遵守本文件。
+> 本文件是给 Codex 的长期项目上下文。每次让 Codex 修改项目时，请先 `@CODEX.md`，并要求 Codex 严格遵守本文档。
 >
-> 当前阶段：Unity 2D 横向四轨音游逻辑已经基本正常运行，正在进入“接入正式美术资源 / UI 视觉重构”阶段。不要从零重写项目。
+> 当前阶段：**多 Scene 菜单流程搭建 + 硬件输入接入准备**。
+> Unity 2D 横向四轨音游本体已经基本完成，下一步重点是 `SongSelectScene` 和 `HandSettingScene`。
+> 不要从零重写项目，不要破坏现有可运行 Gameplay 版本。
 
 ---
 
@@ -10,15 +12,14 @@
 
 项目暂定名：**Rehab Rhythm Game**
 
-这是一个面向脑卒中患者手部康复训练的软硬件结合项目。最终目标是使用柔性压力传感器手套采集患者手指按压力度，并将数据映射到 Unity 2D 横向四轨音乐游戏中，让患者通过节奏游戏完成手指按压、长按、力量分级、反应训练等康复动作。
+这是一个面向脑卒中患者手部康复训练的软硬件结合项目。最终目标是使用柔性压力传感器手套采集患者手指按压力度，并将数据映射到 Unity 2D 横向四轨音乐游戏中，让患者通过节奏游戏完成手指按压、长按、力量分级和反应训练。
 
-当前用户负责 Unity 音乐游戏部分。硬件部分未来计划使用柔性压力传感器 + Arduino / ESP32 等开发板，通过串口或其他通信方式接入 Unity。目前 Unity 端主要使用键盘模拟输入。
+当前用户负责 Unity 音乐游戏部分。硬件部分未来计划使用柔性压力传感器 + Arduino / ESP32，通过 USB 串口接入 Unity。目前 Unity 端主要使用键盘输入作为 Debug 和备用输入。
 
 项目定位：
-
 - 工业设计 / 交互设计 / 康复辅助产品原型
-- 当前重点不是医学实验，而是先完成一个可演示、可交互、可扩展到硬件输入的游戏原型
-- 后续会逐步加入传感器输入、训练数据记录、康复反馈可视化
+- 当前重点是完成可演示、可交互、可扩展到硬件输入的游戏原型
+- 后续逐步加入传感器输入、训练数据记录、康复反馈可视化
 
 ---
 
@@ -26,63 +27,201 @@
 
 Unity 版本：**Unity 2022.3.62f3c1**
 
-当前场景中已有基础玩法对象：
+当前确认状态：
+- Unity 2D 横向四轨音游本体已经基本完成。
+- 普通音符、强力音符、长按音符核心逻辑已完成。
+- 当前主游戏场景需要保留，后续作为 `04_Gameplay` 接入多 Scene 流程。
+- 当前下一步不是重写 Gameplay，而是制作菜单流程和准备硬件输入。
 
-- `GameManager`：挂载 `RhythmManager`
-- `AudioManager`：音效管理
-- `EffectManager`：粒子特效和判定区视觉反馈管理
-- `spawnPoint`：音符生成位置
-- `Judgment Area`：判定区
-- `Track / Railway track 1-4`：四条轨道参考
-- `Simple Note / Big Note / Long Note`：音符相关对象或 Prefab
-- `Canvas / EventSystem / TextMusic`：UI 和音乐相关对象
-
-当前已经实现：
-
-- JSON 曲谱读取
+已完成系统：
+- JSON 谱面读取：`Assets/StreamingAssets/Beatmap_FishStep.json`
 - 按音乐时间自动生成音符
+- 四轨输入检测
 - 普通音符 `Normal`
 - 大力音符 `Strong`
 - 长按音符 `Long`
-- 四轨输入检测
 - 命中 / Miss / Combo / Score 基础逻辑
-- 判定区按下时的视觉反馈
-- 普通、大力、长按三类命中特效接口
-- 音效播放接口
-- 简单打谱工具 `BeatmapRecorder`
-
-当前确认：
-
-- `RhythmManager` 挂在 `GameManager` 上
-- `Beatmap_FishStep.json` 位于 `Assets/StreamingAssets/`
-- 当前核心逻辑基本正常运行，没有需要优先修复的严重 Bug
-- 当前进入正式美术资源接入阶段
+- 明确的 X 轴判定窗口
+- 长按中途松手 Miss 释放逻辑
+- 长按 Tail Sliced SpriteRenderer 支持
+- 四色音符运行时按 `trackID` 换 Sprite
+- 正式美术接入：
+  - 背景和装饰
+  - 四条轨道
+  - 四个手势图标
+  - 四色音符
+  - 普通 / 大力 / 长按音符 Prefab
+  - 判定区美术
+- HUD：
+  - `BEAT`
+  - `COMBO`
+  - `hit`
+  - `miss`
+- `PauseManager`：
+  - 鼠标点击暂停按钮
+  - `Esc` 切换暂停
+  - 暂停时 `Time.timeScale = 0`
+  - 音乐 `Pause / UnPause`
+  - 暂停时屏蔽输入
+- 左侧花朵进度条 `FlowerProgressController`：
+  - 读取 `bgmSource.time / bgmSource.clip.length`
+  - 叶片随音乐进度点亮
+  - 支持透明度进度开关
+  - 支持生长缩放开关
+  - 支持编辑器预览
+- 顶部 HUD 数值脚本 `GameplayHUDController`
+- 渐进背景 `ProgressiveBackgroundController`：
+  - 已实验
+  - 默认可禁用
+  - 关闭时显示最终完整背景
+- 命中特效优化：
+  - 普通 / 大力 / 长按三套粒子 Prefab
+  - 粒子从判定圆附近发散
+  - 粒子颜色按 `trackID` 映射到四条轨道颜色
+- Combo 规则调整：
+  - 普通音符 `combo +1`
+  - 大力音符 `combo +2`
+  - 长按头部 `combo +1`
+  - 长按保持每 `1` 秒 `combo +1`
+  - `hit / miss / beat` 逻辑独立
+- 多 Scene Start 流程已开始：
+  - `00_Bootstrap`
+  - `01_Start`
+  - `02_SongSelect`
+  - `03_HandSetting`
+  - `04_Gameplay` 后续接入
+- StartScene 当前方案：
+  - 背景装饰放世界空间 `SpriteRenderer`
+  - 标题和 `touch to start` 放 Canvas
+  - 点击任意处 / 任意键 / 触摸任意处进入 SongSelectScene
+  - 使用白色淡入淡出转场
+  - `touch to start` 可使用 `UIBreathingPrompt` 做轻微呼吸闪烁
 
 ---
 
-## 3. 重要脚本说明
+## 3. 多 Scene 架构说明
 
-### 3.1 `RhythmManager.cs`
+目标 Scene 结构：
+
+```text
+Assets/Scenes/00_Bootstrap.unity
+Assets/Scenes/01_Start.unity
+Assets/Scenes/02_SongSelect.unity
+Assets/Scenes/03_HandSetting.unity
+Assets/Scenes/04_Gameplay.unity
+```
+
+各 Scene 职责：
+- `00_Bootstrap`：创建持久管理器，作为游戏入口。
+- `01_Start`：开始界面。世界空间 SpriteRenderer 做背景装饰，Canvas 只放标题和 `touch to start`。
+- `02_SongSelect`：选曲界面。下一阶段重点。
+- `03_HandSetting`：左右手和手指选择界面。
+- `04_Gameplay`：正式音游场景。当前完整 Gameplay 后续应另存或接入为此场景。
+
+相关脚本：
+- `GameSessionManager`
+  - 使用 `DontDestroyOnLoad`
+  - 保存跨场景数据：
+    - `selectedSongIndex`
+    - `selectedSongTitle`
+    - `selectedHand`
+    - `selectedFinger`
+    - `hardwareInputEnabled`
+- `SceneTransitionManager`
+  - 使用 `DontDestroyOnLoad`
+  - 使用全屏白色 `FadeImage` 做淡入淡出
+  - `LoadSceneWithFade(string sceneName)` 负责场景切换
+  - 使用 `Time.unscaledDeltaTime`
+- `BootstrapLoader`
+  - 从 `00_Bootstrap` 自动进入 `01_Start`
+- `StartSceneController`
+  - 检测任意键、鼠标点击、触摸
+  - 进入 `02_SongSelect`
+- `UIBreathingPrompt`
+  - 给 `touch to start` 这类 UI 提示做轻微呼吸闪烁
+
+重要原则：
+- 不要在每个 Scene 里重复创建 `GameSessionManager` / `SceneTransitionManager`。
+- 跨场景数据不要靠静态散变量到处传，优先走 `GameSessionManager`。
+- `04_Gameplay` 不应在加载时自动无条件开始正式游戏，后续应等待流程管理器或初始化脚本根据选曲数据开始。
+
+---
+
+## 4. 硬件接入准备说明
+
+硬件接入尚未正式开始，但方向已确定：
+- Arduino / ESP32 通过 USB 串口向 Unity 发送 4 路压力数据。
+- 推荐串口格式：
+
+```text
+P:v0,v1,v2,v3
+```
+
+示例：
+
+```text
+P:28,35,612,140
+```
+
+含义：
+- `v0 ~ v3` 对应 Unity `Track 0 ~ Track 3`
+- Arduino 只负责采集并发送压力值
+- Arduino 不判断普通 / 大力 / 长按
+- Unity 端根据阈值判断：
+  - `pressThreshold`
+  - `strongThreshold`
+  - `releaseThreshold`
+  - Tap / StrongTap / Holding / Release
+
+未来建议新增：
+- `SerialPortManager`
+  - 负责打开串口、读取字符串、断线重连或报错提示
+- `ArduinoPressureInput`
+  - 解析 `P:v0,v1,v2,v3`
+  - 将压力值转换为轨道输入状态
+- `SensorInputProvider`
+  - 作为硬件输入适配层
+  - 与键盘输入共存，便于 Debug
+
+重要原则：
+- 不要把串口读取直接写进 `RhythmManager`。
+- 不要让 Arduino 判断游戏音符。
+- 不要让硬件输入层直接做谱面判定。
+- `RhythmManager` 继续只负责读谱、生成、判定、分数和生命周期。
+
+---
+
+## 5. 重要脚本说明
+
+### 5.1 `RhythmManager.cs`
 
 职责：
-
 - 初始化生成点和判定区位置
 - 订阅 `InputManager` 输入事件
-- 从 `Assets/StreamingAssets/Beatmap_FishStep.json` 读取谱面
+- 读取 `Assets/StreamingAssets/Beatmap_FishStep.json`
 - 根据 BGM 时间自动生成音符
 - 处理普通、大力、长按音符判定
-- 管理分数、Combo、Miss
+- 管理分数、Combo、hit、miss、beat
 - 管理长按音符生命周期
 
 重要公开字段：
-
 - `spawnPoint`
 - `noteMoveSpeed`
 - `longNoteLength`
 - `judgmentArea`
-- `interactRadius`
+- `interactRadius`，保留兼容旧设置
+- `hitWindowX`
+- `missWindowX`
+- `holdStartWindowX`
 - `score`
 - `combo`
+- `normalComboGain`
+- `strongComboGain`
+- `longHeadComboGain`
+- `enableLongHoldComboTick`
+- `longHoldComboInterval`
+- `longHoldTickComboGain`
+- `longHoldTickScore`
 - `trackTransforms`
 - `randomTrackIfEmpty`
 - `normalNotePrefab`
@@ -91,23 +230,28 @@ Unity 版本：**Unity 2022.3.62f3c1**
 - `beatmapFileName`
 - `bgmSource`
 
+公开读取接口：
+- `GetScore()`
+- `GetCombo()`
+- `GetHitCount()`
+- `GetMissCount()`
+- `GetBeatCount()`
+
 注意：
-
 - 不要随意重写 `RhythmManager` 的整体结构。
-- 当前读谱、生成、判定逻辑已经能运行。
-- 如果需要为 UI 暴露数据，可以增加小型 public getter 或事件，但不要破坏现有字段绑定。
-- 修改前必须检查 Inspector 绑定，避免字段名改变导致 Unity 引用丢失。
+- 读谱、生成、判定逻辑已经能运行。
+- 如果为 UI 暴露数据，只做小 getter 或小事件，不要破坏 Inspector 绑定。
+- 不要把硬件串口读取塞进 `RhythmManager`。
 
-### 3.2 `InputManager.cs`
+### 5.2 `InputManager.cs`
 
 职责：
-
 - 四条轨道独立按键检测
 - 当前使用键盘模拟柔性压力传感器
-- 普通输入、大力输入、长按输入事件发送
+- 发送普通输入、大力输入、长按输入事件
+- 暂停时通过 `PauseManager.IsPaused` 屏蔽轨道输入
 
 当前默认键位：
-
 - Track 0：`Alpha7`
 - Track 1：`U`
 - Track 2：`J`
@@ -115,7 +259,6 @@ Unity 版本：**Unity 2022.3.62f3c1**
 - 大力辅助键：`Space`
 
 事件：
-
 - `OnTap(int track)`
 - `OnStrongTap(int track)`
 - `OnHoldStart(int track)`
@@ -123,22 +266,20 @@ Unity 版本：**Unity 2022.3.62f3c1**
 - `OnHoldEnd(int track)`
 
 注意：
+- 未来硬件接入时，可以保留键盘输入作为 Debug 备用。
+- 硬件输入适配层应转成类似 `InputManager` 的轨道输入事件或状态。
 
-- 当前阶段不优先重构输入系统。
-- 未来接入硬件时，可以保留 `InputManager` 作为统一输入抽象层，把键盘输入替换或扩展为传感器输入。
-- 不要把硬件串口逻辑直接塞进 `RhythmManager`。
-
-### 3.3 `Note.cs`
+### 5.3 `Note.cs`
 
 职责：
-
 - 音符类型定义：`Normal / Strong / Long`
 - 音符移动
 - 长按音符尾巴缩短
-- 音符是否越过判定区的判断
+- Sliced / Tiled Tail 使用 `SpriteRenderer.size.x`
+- 普通 / 大力 / 长按音符共用运行时逻辑
+- 在 `Setup()` 末尾调用 `TrackNoteVisual.ApplyTrackVisual(trackID)`
 
 重要字段：
-
 - `noteType`
 - `moveSpeed`
 - `longNoteLength`
@@ -150,88 +291,100 @@ Unity 版本：**Unity 2022.3.62f3c1**
 - `currentPhysicalLength`
 - `HeadX`
 - `TailX`
-
-长按音符视觉逻辑：
-
-- `tailTransform.localScale.x` 控制长按尾巴长度
-- `tailTransform.localPosition.x` 控制尾巴中心位置
-- `Shrink(float amount)` 每帧缩短剩余长度
-- `UpdateTailVisuals()` 更新尾巴视觉
+- `useDebugColor`
 
 注意：
+- 不要重写 `Shrink()`、`TailX`、`HeadX`、移动逻辑。
+- 长按 Tail 的 Draw Mode 推荐使用 Sliced。
 
-- 接入新的长按音符 Prefab 时，必须正确绑定 `headTransform` 和 `tailTransform`。
-- `Tail` 最好是横向可缩放的 Sprite，不要用无法横向缩放的复杂组合图。
-- 不要在美术接入阶段重写 `Shrink()` 逻辑。
-
-### 3.4 `EffectManager.cs`
+### 5.4 `EffectManager.cs`
 
 职责：
-
 - 普通命中特效
 - 大力命中特效
 - 长按持续特效
 - 判定区视觉反馈触发
+- 按 `trackID` 设置粒子颜色
 
 重要字段：
-
 - `normalSparkPrefab`
 - `strongSparkPrefab`
 - `holdSparkPrefab`
+- `trackColors`
 - `trackVisuals`
 
+四轨粒子颜色：
+- Track 0：`#B82360`
+- Track 1：`#EE7936`
+- Track 2：`#007068`
+- Track 3：`#262F57`
+
 注意：
+- `trackVisuals` 必须按 0、1、2、3 顺序绑定。
+- `StopHoldSpark()` 使用 `ParticleSystem.Stop()`，不要直接 Destroy。
 
-- `trackVisuals` 必须按 0、1、2、3 顺序绑定四条轨道的 `JudgmentVisualizer`。
-- `StopHoldSpark()` 使用 `ParticleSystem.Stop()`，不要直接 `Destroy()`，目的是让粒子自然熄灭。
-
-### 3.5 `JudgmentVisualizer.cs`
+### 5.5 `GameplayHUDController.cs`
 
 职责：
+- 每帧读取 `RhythmManager`
+- 显示三位数格式：
+  - `BEAT`
+  - `COMBO`
+  - `hit`
+  - `miss`
 
-- 挂在判定区圆圈上
-- 输入命中时放大并变亮
+显示格式：
+- `0 -> 000`
+- `5 -> 005`
+- `23 -> 023`
+- `128 -> 128`
 
-注意：
-
-- 替换新的判定圈美术后，需要确认该对象仍然挂载 `JudgmentVisualizer`。
-- 可以调整 `pressColor` 和 `pressScale` 来适配新美术。
-
-### 3.6 `AudioManager.cs`
-
-职责：
-
-- 播放普通、大力、长按、Miss 音效
-
-接口：
-
-- `PlayNormalHit()`
-- `PlayStrongHit()`
-- `PlayLongHit()`
-- `PlayMiss()`
-
-注意：
-
-- 不要在每个脚本里直接播放 AudioSource，统一通过 `AudioManager`。
-
-### 3.7 `BeatmapRecorder.cs`
+### 5.6 `PauseManager.cs`
 
 职责：
-
-- 辅助录制谱面时间点
-- 当前主要用于记录节奏时间
+- 点击暂停按钮暂停 / 继续
+- `Esc` 暂停 / 继续
+- 暂停时 `Time.timeScale = 0`
+- 音乐 `Pause / UnPause`
+- 更新 Pause / Play 图标
+- 销毁时恢复 `Time.timeScale = 1`
 
 注意：
+- `InputManager` 会在暂停时停止处理轨道输入。
 
-- 当前录制器较简单，默认录制 `track = 0`。
-- 当前 `RhythmManager` 中有 `randomTrackIfEmpty`，如果谱面所有 track 都是 0，会随机分配轨道。
-- 后续康复训练谱面应明确指定 track，不应一直依赖随机轨道。
+### 5.7 `FlowerProgressController.cs`
+
+职责：
+- 左侧植物式音乐进度条
+- 读取 `bgmSource.time / bgmSource.clip.length`
+- Stem / Flower / Leaf_08 常亮
+- 其余叶子按音乐进度从上到下点亮
+- 支持透明度变化开关
+- 支持生长缩放开关
+- 支持编辑器预览
+
+注意：
+- 透明度控制 `Visual` 的 `SpriteRenderer`
+- 生长缩放优先控制叶子根物体
+- 使用 `Rebuild Initial Scale Cache` 缓存当前缩放为基准
+
+### 5.8 `ProgressiveBackgroundController.cs`
+
+职责：
+- 渐进式背景实验功能
+- 使用两张景色层交叉淡入淡出
+- 在音乐进度 0%~80% 内切换到最终完整背景
+- 可关闭，关闭时显示最终背景
+
+注意：
+- 当前为实验功能，默认可禁用。
+- 只控制背景视觉，不影响 Gameplay。
 
 ---
 
-## 4. 曲谱格式
+## 6. 谱面格式
 
-曲谱位置：
+谱面位置：
 
 ```text
 Assets/StreamingAssets/Beatmap_FishStep.json
@@ -259,446 +412,144 @@ Assets/StreamingAssets/Beatmap_FishStep.json
 ```
 
 字段说明：
-
 - `time`：音符应到达判定区的音乐时间，单位秒
 - `track`：轨道编号，0-3
 - `type`：音符类型，`Normal` / `Strong` / `Long`
 - `length`：长按长度，普通和大力音符为 0
 
 注意：
-
-- 旧谱面中可能出现 `Smooth Long`，目前代码会根据 `length > 0` 把它当成普通 `Long`。
-- 当前谱面大量 `track = 0`，这不是最终康复谱面格式。
-- 后续正式康复谱面应明确控制每个音符所在轨道，用于对应不同手指训练。
+- 不要随意修改谱面 JSON 格式。
+- 当前部分谱面大量 `track = 0`，正式康复谱面后续应明确指定每个音符所在轨道。
 
 ---
 
-## 5. 当前美术接入阶段目标
+## 7. 美术接入历史与当前原则
 
-当前目标不是重写玩法，而是把已有逻辑接入正式美术资源。
+美术接入阶段已经基本完成，相关历史信息保留如下：
 
-美术接入优先级：
+已完成：
+- `ArtRoot` 下接入背景、轨道、手势图标、判定区视觉
+- 新建 `GameplayLogicRoot` 作为逻辑锚点系统
+- `RhythmManager.trackTransforms`、`judgmentArea`、`spawnPoint` 已切到逻辑锚点
+- 旧灰色占位视觉已通过关闭 `SpriteRenderer.enabled` 隐藏，未删除对象
+- 正式音符 Prefab：
+  - `NormalNote_Art`
+  - `StrongNote_Art`
+  - `LongNote_Art`
+- `TrackNoteVisual` 支持 3 个 Prefab 按 4 条轨道切换 Sprite
+- 长按 Tail 支持 Sliced 模式，避免圆角和缺口变形
 
-1. 背景图 / 装饰图
-2. 四条轨道视觉
-3. 四个手势图标
-4. 四个判定圈
-5. 普通音符 Prefab
-6. 大力音符 Prefab
-7. 长按音符 Prefab
-8. 顶部 UI：Pause、Beat、Combo、Hit、Miss
-9. 命中特效和长按特效美化
-
-当前视觉参考：
-
-- 白色清爽背景
-- 柔和康复风格
-- 四条轨道分别使用不同颜色
-- 左侧有手势图标
-- 顶部有 `BEAT / COMBO / hit / miss`
-- 音符从右向左移动
-- 判定区在左侧偏中位置
+仍需遵守：
+- 逻辑对象和视觉对象分离。
+- 背景、轨道、判定圈、花朵、装饰图只负责显示。
+- 真正判定位置仍由 `GameplayLogicRoot` / `RhythmManager` 引用决定。
+- 不要删除旧逻辑对象。
+- 不要为了美术改判定规则。
 
 ---
 
-## 6. 美术资源接入原则
+## 8. 代码规范与协作方式
 
-### 6.1 不要破坏逻辑坐标
+### 8.1 基本规范
 
-轨道、判定区、生成点的视觉可以换，但逻辑 Transform 不要随便删。
+- 使用 C#，兼容 Unity 2022.3 LTS。
+- 保持现有 public 字段，避免 Inspector 引用丢失。
+- 新字段尽量使用 `[Header]` 分组。
+- 不要引入复杂第三方库。
+- 不要切换到 Unity New Input System，除非用户明确要求。
+- 不要一次性重构多个系统。
+- 每一步保持可运行版本。
 
-尤其保留：
+### 8.2 脚本职责边界
 
-- `spawnPoint`
-- `judgmentArea`
-- `trackTransforms[0..3]`
+- `InputManager`：键盘输入检测，不做音符判定。
+- 未来 `ArduinoPressureInput` / `SensorInputProvider`：硬件输入适配，不做谱面判定。
+- `RhythmManager`：读谱、生成、判定、分数、音符生命周期。
+- `Note`：单个音符移动、长按尾巴视觉长度。
+- `EffectManager`：粒子和判定区视觉反馈。
+- `AudioManager`：音效播放。
+- `GameplayHUDController`：HUD 显示。
+- `PauseManager`：暂停状态和暂停 UI。
+- `GameSessionManager`：跨场景数据。
+- `SceneTransitionManager`：场景转场。
 
-如果需要换美术，优先在这些逻辑对象下面添加子物体 Sprite，而不是删除原对象。
+### 8.3 每次 Codex 修改后必须说明
 
-推荐结构：
-
-```text
-Track 0 Logic Object
-└── Visual Sprite
-
-Judgment Area 0 Logic Object
-└── Judgment Circle Sprite
-```
-
-### 6.2 逻辑对象和视觉对象分离
-
-不要让装饰图、背景图、花朵图承担判定逻辑。
-
-例如：
-
-- 背景图只负责显示
-- 轨道图只负责显示
-- 判定圈 Sprite 只负责显示
-- 真正的判定位置仍由 `judgmentArea.position` 和 `trackTransforms` 决定
-
-### 6.3 每一步只做小改动
-
-每次修改后都要运行一次 Unity，确认：
-
-- 音符仍能生成
-- 普通音符仍能命中
-- 大力音符仍能命中
-- 长按音符仍能命中和完成
-- Console 没有红色报错
-- Inspector 引用没有丢失
+Codex 每次修改后都要告诉用户：
+- 修改了哪些文件
+- 是否影响 Inspector 绑定
+- Unity 中需要点击哪个菜单或拖哪些引用
+- 应该如何测试
+- 是否有未能验证的部分
 
 ---
 
-## 7. Prefab 接入建议
-
-### 7.1 普通音符 `NormalNote`
-
-推荐结构：
-
-```text
-NormalNote
-├── SpriteRenderer / OuterCircle
-└── SpriteRenderer / InnerCircle（可选）
-```
-
-要求：
-
-- 根物体必须挂 `Note.cs`
-- 视觉中心应在根物体原点附近
-- 不要改变 `Note.cs` 的公共字段名
-
-### 7.2 大力音符 `StrongNote`
-
-推荐结构：
-
-```text
-StrongNote
-├── SpriteRenderer / OuterCircle
-├── SpriteRenderer / InnerCircle
-└── SpriteRenderer / StrongMark（可选）
-```
-
-要求：
-
-- 根物体必须挂 `Note.cs`
-- `noteType` 由 `RhythmManager.SpawnNote()` 调用 `Setup()` 设置，不要依赖 Inspector 手动设置
-- 视觉上应明显区别于普通音符
-
-### 7.3 长按音符 `LongNote`
-
-推荐结构：
-
-```text
-LongNote
-├── Head
-│   └── SpriteRenderer
-└── Tail
-    └── SpriteRenderer
-```
-
-要求：
-
-- 根物体挂 `Note.cs`
-- `headTransform` 绑定到 `Head`
-- `tailTransform` 绑定到 `Tail`
-- `Tail` 的 pivot / localPosition 要适配当前 `UpdateTailVisuals()` 逻辑
-- `Tail` 必须能横向缩放
-- 不要删除 `currentPhysicalLength` / `Shrink()` / `UpdateTailVisuals()` 逻辑
-
----
-
-## 8. UI 接入建议
-
-需要新增或维护一个 UI 控制脚本，例如：
-
-```text
-GameplayUIController.cs
-```
-
-职责：
-
-- 显示 Combo
-- 显示 hit 数
-- 显示 miss 数
-- 显示 Beat 或 Score
-- 处理 Pause 按钮
-
-推荐字段：
-
-```csharp
-public RhythmManager rhythmManager;
-public TMP_Text comboText;
-public TMP_Text hitText;
-public TMP_Text missText;
-public TMP_Text beatText;
-```
-
-注意：
-
-- 如果当前没有 hitCount / missCount，可以在 `RhythmManager` 中小范围新增字段和 getter。
-- 不要为了 UI 大幅重构判定逻辑。
-- UI 第一版只做数字更新，不要先做复杂动画。
-
----
-
-## 9. 代码规范
-
-### 9.1 基本规范
-
-- 使用 C#，兼容 Unity 2022.3 LTS
-- 保持现有中文注释风格，可以补充必要注释
-- 不要引入复杂第三方库
-- 不要切换到 Unity New Input System，除非用户明确要求
-- 不要使用反射、动态加载等不必要复杂技术
-- 不要一次性重构多个系统
-
-### 9.2 Unity Inspector 规范
-
-- 现有 public 字段尽量保留，避免丢 Inspector 引用
-- 修改字段名之前必须说明风险
-- 新字段请使用 `[Header]` 分组
-- 需要用户手动拖拽的字段，要在回复中明确说明
-
-### 9.3 脚本职责边界
-
-- `InputManager`：输入检测，不做音符判定
-- `RhythmManager`：读谱、生成、判定、分数
-- `Note`：单个音符的移动和视觉长度
-- `EffectManager`：粒子和判定区视觉反馈
-- `AudioManager`：音效播放
-- `GameplayUIController`：UI 显示
-- 未来 `SerialPortManager`：硬件串口输入，不直接写判定逻辑
-
----
-
-## 10. DO NOT — 禁止事项
+## 9. DO NOT - 禁止事项
 
 Codex 必须遵守：
 
 1. **不要从零重写项目。**
 2. **不要删除现有可运行逻辑。**
 3. **不要大规模重构 `RhythmManager`、`InputManager`、`Note`。**
-4. **不要改变现有曲谱 JSON 格式，除非用户明确要求。**
+4. **不要改变现有谱面 JSON 格式，除非用户明确要求。**
 5. **不要删除 `spawnPoint`、`judgmentArea`、`trackTransforms` 等逻辑引用对象。**
 6. **不要随意改 public 字段名，避免 Inspector 引用丢失。**
 7. **不要把 UI、美术、判定逻辑混在一个脚本里。**
 8. **不要为了美术接入修改核心判定规则。**
-9. **不要把硬件串口逻辑直接塞进 `RhythmManager`。**
-10. **不要一次性完成多个阶段的大改动。**
-11. **不要在没有说明的情况下创建大量新脚本。**
-12. **不要使用复杂设计模式掩盖简单问题。**
-13. **不要假设用户已经熟悉 Unity 高级概念，回复中要说明 Unity 里需要怎么绑定。**
-14. **不要只给代码，不告诉用户在 Inspector / Prefab / Scene 里怎么操作。**
-15. **不要自动改动美术资源导入设置，除非说明原因和影响。**
+9. **不要把 Arduino 串口读取放进 `RhythmManager`。**
+10. **不要让 Arduino 判断游戏音符。**
+11. **不要绕过 `GameSessionManager` 直接在场景之间硬编码传值。**
+12. **不要在每个 Scene 里重复创建 `GameSessionManager` / `SceneTransitionManager`。**
+13. **不要让 GameplayScene 在加载时自动开始正式游戏，应该等待流程管理器或初始化脚本调用开始。**
+14. **不要删除 Bootstrap 场景中的 `PersistentManagers`。**
+15. **不要一次性完成多个阶段的大改动。**
+16. **不要只给代码，不告诉用户 Unity Inspector / Prefab / Scene 里怎么操作。**
+17. **不要自动改动美术资源导入设置，除非说明原因和影响。**
 
 ---
 
-## 11. Codex 每次执行任务前必须做的事
+## 10. 分阶段协作计划
 
-每次开始任务前，Codex 应该先：
+本项目采用“小阶段推进”的协作方式。每个阶段只完成一个明确目标，用户确认完成后再进入下一阶段。
 
-1. 阅读本 `CODEX.md`
-2. 明确当前任务属于哪个阶段
-3. 找到相关脚本和场景对象
-4. 判断是否需要改代码，还是只需要 Unity 编辑器操作
-5. 列出将要修改的文件
-6. 说明可能影响的 Inspector 绑定
-7. 等用户确认后再进行较大改动
+### 已完成 / 历史阶段
 
-如果只是小范围修复，可以直接给出修改方案，但仍需说明改了什么。
+- 阶段 0：Git 版本管理和首次保护点
+- 阶段 1：美术资源目录与导入准备
+- 阶段 2：GameplayLogicRoot 逻辑锚点与新美术坐标对齐
+- 阶段 2.x：隐藏旧占位视觉
+- 阶段 3：正式音符 Prefab 模板与绑定
+- 阶段 3.5：强力音符粒子位置、长按 Tail Sliced 修复
+- 阶段 3.6：判定窗口、长按松手释放修复
+- 阶段 3.7：按轨道自动切换音符颜色
+- 阶段 4.1：左侧花朵式音乐进度条
+- 阶段 4.2：暂停按钮与 Esc 暂停系统
+- 阶段 4.3：顶部 HUD 数值显示
+- 阶段 4.4：渐进式背景实验功能
+- 阶段 4.5：命中特效粒子优化和轨道颜色
+- 阶段 5.1：多 Scene 基础架构与 StartScene，已完成
+
+### 当前与下一步计划
+
+- 阶段 5.2：`SongSelectScene` 选曲界面，下一步
+- 阶段 5.3：`HandSettingScene` 左右手与手指选择
+- 阶段 5.4：`GameplayScene` 接入 `GameSessionManager` 选曲数据
+- 阶段 6.1：Arduino 串口读取测试
+- 阶段 6.2：压力数据显示 Debug UI
+- 阶段 6.3：压力阈值调试与 Tap / StrongTap / Hold 输入映射
+- 阶段 6.4：硬件输入与键盘输入共存测试
 
 ---
 
-## 12. 分阶段协作计划
+## 11. 推荐的每次 Codex 任务格式
 
-本项目采用“小阶段推进”的协作方式。每一阶段只完成一个明确目标。用户确认完成后，再进入下一阶段。
-
-### 阶段 0：保护当前可运行版本
-
-目标：避免后续美术接入破坏当前逻辑。
-
-任务：
-
-- 确认项目可以正常运行
-- 确认 Console 无红色报错
-- 提交 Git / 复制备份场景
-- 建议创建 `SampleScene_Art` 或类似副本场景
-
-完成标准：
-
-- 当前逻辑版本可随时恢复
-- 后续改动有回退点
-
-### 阶段 1：整理美术资源导入
-
-目标：让正式美术资源在 Unity 中可用。
-
-任务：
-
-- 将 PNG / SVG / PSD 等资源放入合适目录
-- 建议目录：`Assets/Art/UI`、`Assets/Art/Notes`、`Assets/Art/Backgrounds`、`Assets/Art/Tracks`
-- 设置 Sprite 导入类型
-- 检查分辨率、透明通道、Pixels Per Unit
-
-完成标准：
-
-- 资源在 Project 面板可见
-- 拖入场景后显示正常
-
-### 阶段 2：替换背景和装饰层
-
-目标：先完成最安全的静态视觉替换。
-
-任务：
-
-- 添加背景图
-- 添加左侧花朵装饰
-- 添加右上角植物装饰
-- 添加云朵、雪山等静态装饰
-- 不改任何玩法脚本
-
-完成标准：
-
-- 游戏运行正常
-- 音符仍能生成、移动、判定
-- 背景不遮挡轨道和音符
-
-### 阶段 3：替换四条轨道和手势图标
-
-目标：让四轨界面接近正式视觉。
-
-任务：
-
-- 替换四条轨道颜色和线条
-- 添加四个手势图标
-- 保留 `trackTransforms` 作为逻辑轨道 Y 值参考
-- 不改变判定规则
-
-完成标准：
-
-- 四条轨道位置正确
-- 音符仍沿四条轨道移动
-- 手势图标与轨道对应清楚
-
-### 阶段 4：替换判定圈视觉
-
-目标：把原有判定圆替换为正式美术。
-
-任务：
-
-- 替换四个判定圈 Sprite
-- 保留 `JudgmentVisualizer`
-- 检查 `EffectManager.trackVisuals` 顺序
-- 调整 `pressScale` 和 `pressColor`
-
-完成标准：
-
-- 按键时对应判定圈有反馈
-- 四条轨道反馈互不干扰
-
-### 阶段 5：替换普通和大力音符 Prefab
-
-目标：让普通 / 大力音符使用正式视觉。
-
-任务：
-
-- 创建或修改 `NormalNote` Prefab
-- 创建或修改 `StrongNote` Prefab
-- 保证根物体挂 `Note.cs`
-- 重新绑定 `RhythmManager.normalNotePrefab` 和 `strongNotePrefab`
-
-完成标准：
-
-- Normal / Strong 音符生成正常
-- 命中正常
-- Miss 正常
-- 特效和音效正常
-
-### 阶段 6：替换长按音符 Prefab
-
-目标：让长按音符使用正式视觉，并保持尾巴缩短逻辑正常。
-
-任务：
-
-- 创建或修改 `LongNote` Prefab
-- 设置 `Head` 和 `Tail`
-- 绑定 `Note.headTransform` 和 `Note.tailTransform`
-- 检查 `Tail` 横向缩放效果
-- 测试长按开始、持续、结束、松手
-
-完成标准：
-
-- 长按头部命中正常
-- 尾巴缩短正常
-- 松手逻辑正常
-- 长按完成逻辑正常
-- 特效停止自然
-
-### 阶段 7：顶部 UI 数据显示
-
-目标：接入 Combo / Hit / Miss / Beat 显示。
-
-任务：
-
-- 创建 `GameplayUIController.cs`
-- 在 Canvas 中创建文本对象
-- 从 `RhythmManager` 获取数据
-- 如果必要，小范围新增 `hitCount` / `missCount`
-- 暂不做复杂动画
-
-完成标准：
-
-- Combo 显示正确
-- Hit / Miss 显示正确
-- UI 不遮挡玩法
-
-### 阶段 8：命中特效和反馈美化
-
-目标：提升打击感和视觉完成度。
-
-任务：
-
-- 替换普通命中特效
-- 替换大力命中特效
-- 替换长按持续特效
-- 调整粒子位置和大小
-- 调整音效音量
-
-完成标准：
-
-- 命中特效位置准确
-- 长按特效能自然停止
-- 视觉风格统一
-
-### 阶段 9：硬件输入接入准备
-
-目标：为柔性压力传感器接入预留结构。
-
-任务：
-
-- 不直接修改核心判定
-- 设计 `SerialPortManager` 或 `SensorInputProvider`
-- 将传感器输入转换为与 `InputManager` 类似的轨道输入状态
-- 支持阈值校准
-
-完成标准：
-
-- 键盘输入仍可用
-- 传感器输入可以逐步替代键盘输入
-
----
-
-## 13. 推荐的每次 Codex 任务格式
-
-用户每次给 Codex 的任务应尽量使用下面格式：
+用户每次给 Codex 的任务建议使用下面格式：
 
 ```text
 @CODEX.md
 
 当前阶段：阶段 X：阶段名称
-
 目标：一句话说明这一步要完成什么。
-
 请你只处理本阶段任务，不要顺手重构其他系统。
 
 请先检查相关文件，然后告诉我：
@@ -710,16 +561,23 @@ Codex 必须遵守：
 确认后再给出具体修改。
 ```
 
+如果是小范围修复，Codex 可以直接修改，但仍需说明改了什么、如何测试。
+
 ---
 
-## 14. 当前下一步建议
+## 12. 当前下一步建议
 
-当前建议从 **阶段 0：保护当前可运行版本** 开始。
+当前建议进入：**阶段 5.2：SongSelectScene 选曲界面**。
 
-在正式接入美术前，先确保：
+阶段 5.2 目标：
+- 在 `02_SongSelect` 中建立可交互的选曲 UI。
+- 选择歌曲后写入 `GameSessionManager.selectedSongIndex` 和 `selectedSongTitle`。
+- 后续进入 `03_HandSetting`。
+- 暂时不启动 Gameplay 音乐和音符。
 
-1. 当前版本已经提交到 Git，或至少复制了一份场景备份。
-2. 创建一个用于美术接入的新场景副本，例如 `SampleScene_Art`。
-3. 确认运行原场景仍然正常。
-
-只有完成阶段 0 后，再进入阶段 1：导入和整理美术资源。
+阶段 5.2 开始前请确认：
+1. `00_Bootstrap`、`01_Start`、`02_SongSelect`、`03_HandSetting` 已经由菜单工具创建。
+2. Build Settings 中场景顺序正确。
+3. 从 `00_Bootstrap` Play 后能进入 `01_Start`。
+4. 在 `01_Start` 点击任意处能白色 Fade 到 `02_SongSelect`。
+5. 当前完整 Gameplay 场景已备份或准备另存为 `04_Gameplay.unity`。
