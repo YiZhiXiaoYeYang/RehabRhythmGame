@@ -57,6 +57,8 @@ public class SongSelectController : MonoBehaviour
     public float itemSpacing = 30f;
     public Vector2 firstItemAnchoredPosition = Vector2.zero;
     public bool preservePrefabSize = true;
+    [Tooltip("Extra empty space below the last song item when the list is scrolled to the bottom.")]
+    public float listBottomPadding = 80f;
 
     [Header("Editor Preview")]
     public bool livePreviewInEditor = true;
@@ -450,7 +452,9 @@ public class SongSelectController : MonoBehaviour
             laidOutCount++;
         }
 
-        float contentHeight = totalHeight + Mathf.Max(0, laidOutCount - 1) * itemSpacing;
+        float contentHeight = totalHeight
+            + Mathf.Max(0, laidOutCount - 1) * itemSpacing
+            + Mathf.Max(0f, listBottomPadding);
         float finalHeight = Mathf.Max(contentHeight, GetViewportHeight());
         RectTransform contentRect = contentRoot as RectTransform;
         if (contentRect != null)

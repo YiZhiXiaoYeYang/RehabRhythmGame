@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Song_TITLE_004
   m_EditorClassIdentifier: 
   songId: Song_TITLE_004
-  title: 'TITLE '
+  title: Sunlit
   displayNumber: 004
   completionState: 0
   audioClip: {fileID: 0}

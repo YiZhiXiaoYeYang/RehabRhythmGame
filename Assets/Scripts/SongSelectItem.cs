@@ -52,9 +52,18 @@ public class SongSelectItem : MonoBehaviour
 
         if (titleText != null)
         {
-            titleText.text = data != null && !string.IsNullOrEmpty(data.displayNumber)
-                ? $"TITLE {data.displayNumber}"
-                : data != null ? data.title : "TITLE";
+            if (data != null && !string.IsNullOrWhiteSpace(data.title))
+            {
+                titleText.text = data.title;
+            }
+            else if (data != null && !string.IsNullOrWhiteSpace(data.displayNumber))
+            {
+                titleText.text = $"TITLE {data.displayNumber}";
+            }
+            else
+            {
+                titleText.text = "Untitled";
+            }
         }
 
         if (numberText != null)

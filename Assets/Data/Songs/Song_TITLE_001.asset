@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Song_TITLE_001
   m_EditorClassIdentifier: 
   songId: Song_TITLE_001
-  title: 'TITLE '
+  title: Fish Step
   displayNumber: 001
   completionState: 2
   audioClip: {fileID: 0}
