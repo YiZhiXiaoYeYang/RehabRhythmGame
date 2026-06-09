@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Song_TITLE_005
   m_EditorClassIdentifier: 
   songId: Song_TITLE_005
-  title: TITLE 005
+  title: TITLE
   displayNumber: 005
   completionState: 1
   audioClip: {fileID: 0}

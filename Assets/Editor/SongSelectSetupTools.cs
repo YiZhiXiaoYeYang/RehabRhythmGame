@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -17,6 +18,8 @@ public static class SongSelectSetupTools
     private const string SongSelectScenePath = "Assets/Scenes/02_SongSelect.unity";
     private const string GameplayScenePath = "Assets/Scenes/04_Gameplay.unity";
     private const string SongSelectItemPrefabPath = "Assets/Prefeb/UI/SongSelectItem.prefab";
+    private const float SongSelectItemPreferredWidth = 900f;
+    private const float SongSelectItemPreferredHeight = 180f;
 
     [MenuItem(MenuRoot + "/Create Song Select Demo Data")]
     public static void CreateSongSelectDemoData()
@@ -105,13 +108,7 @@ public static class SongSelectSetupTools
         contentRect.anchoredPosition = Vector2.zero;
         contentRect.sizeDelta = new Vector2(0f, 0f);
         VerticalLayoutGroup layoutGroup = EnsureComponent<VerticalLayoutGroup>(content);
-        layoutGroup.spacing = 18f;
-        layoutGroup.padding = new RectOffset(18, 18, 18, 18);
-        layoutGroup.childAlignment = TextAnchor.UpperCenter;
-        layoutGroup.childControlWidth = true;
-        layoutGroup.childControlHeight = false;
-        layoutGroup.childForceExpandWidth = true;
-        layoutGroup.childForceExpandHeight = false;
+        ConfigureSongContentLayout(layoutGroup);
         ContentSizeFitter sizeFitter = EnsureComponent<ContentSizeFitter>(content);
         sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -136,6 +133,11 @@ public static class SongSelectSetupTools
         controller.selectButton = selectButton;
         controller.selectButtonCanvasGroup = selectCanvasGroup;
         controller.gameplaySceneName = "04_Gameplay";
+        controller.useManualLayout = true;
+        controller.itemScale = 1f;
+        controller.itemSpacing = 30f;
+        controller.preservePrefabSize = true;
+        DisableContentAutomaticLayout(controller.contentRoot);
         EditorUtility.SetDirty(controller);
 
         UpdateBuildSettingsForGameplay();
@@ -201,6 +203,180 @@ public static class SongSelectSetupTools
         Debug.Log(string.Join("\n", report));
     }
 
+    [MenuItem(MenuRoot + "/Apply Manual Song List Layout")]
+    public static void ApplyManualSongListLayout()
+    {
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        if (controller == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] No SongSelectController found in the current scene.");
+            return;
+        }
+
+        controller.useManualLayout = true;
+        controller.itemScale = 1f;
+        controller.itemSpacing = 30f;
+        controller.preservePrefabSize = true;
+        DisableContentAutomaticLayout(controller.contentRoot);
+
+        EditorUtility.SetDirty(controller);
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
+
+        Debug.Log("[SongSelectSetupTools] Applied manual Song Select layout. SongSelectItem prefab size is no longer controlled by Content layout components.");
+    }
+
+    [MenuItem(MenuRoot + "/Rebuild Song Select Preview")]
+    public static void RebuildSongSelectPreview()
+    {
+        if (Application.isPlaying)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] Rebuild Song Select Preview is edit-mode only.");
+            return;
+        }
+
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        if (controller == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] No SongSelectController found in the current scene.");
+            return;
+        }
+
+        if (controller.songDatabase == null || controller.songDatabase.songs == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] SongSelectController.songDatabase is missing.");
+            return;
+        }
+
+        if (controller.contentRoot == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] SongSelectController.contentRoot is missing.");
+            return;
+        }
+
+        if (controller.itemPrefab == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] SongSelectController.itemPrefab is missing.");
+            return;
+        }
+
+        controller.useManualLayout = true;
+        DisableContentAutomaticLayout(controller.contentRoot);
+
+        ClearSongSelectPreviewItems(controller.contentRoot);
+
+        int createdCount = 0;
+        List<SongSelectItem> previewItems = new List<SongSelectItem>();
+        for (int i = 0; i < controller.songDatabase.songs.Count; i++)
+        {
+            SongData song = controller.songDatabase.songs[i];
+            GameObject itemObject = PrefabUtility.InstantiatePrefab(controller.itemPrefab.gameObject, controller.contentRoot) as GameObject;
+            if (itemObject == null)
+            {
+                Debug.LogWarning($"[SongSelectSetupTools] Failed to instantiate preview item at index {i}.");
+                continue;
+            }
+
+            SongSelectItem item = itemObject.GetComponent<SongSelectItem>();
+            if (item == null)
+            {
+                Debug.LogWarning($"[SongSelectSetupTools] Preview item at index {i} has no SongSelectItem component.");
+                continue;
+            }
+
+            item.Setup(song, i, controller);
+            item.SetCompletionIcon(GetCompletionIconForPreview(song, controller));
+            item.SetSelected(false);
+            EditorUtility.SetDirty(itemObject);
+            previewItems.Add(item);
+            createdCount++;
+        }
+
+        controller.ApplyManualLayoutToItems(previewItems);
+        EditorUtility.SetDirty(controller);
+        if (controller.contentRoot != null)
+        {
+            EditorUtility.SetDirty(controller.contentRoot);
+        }
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log($"[SongSelectSetupTools] Rebuilt Song Select preview: {createdCount} item(s).");
+    }
+
+    [MenuItem(MenuRoot + "/Debug Song Select Item Sizes")]
+    public static void DebugSongSelectItemSizes()
+    {
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        StringBuilder report = new StringBuilder();
+        report.AppendLine("[SongSelectSetupTools] Debug Song Select Item Sizes");
+
+        if (controller == null)
+        {
+            report.AppendLine("WARNING: No SongSelectController found in the current scene.");
+            Debug.LogWarning(report.ToString());
+            return;
+        }
+
+        RectTransform prefabRect = controller.itemPrefab != null ? controller.itemPrefab.GetComponent<RectTransform>() : null;
+        if (prefabRect == null)
+        {
+            report.AppendLine("WARNING: itemPrefab or itemPrefab RectTransform is missing.");
+        }
+        else
+        {
+            report.AppendLine($"itemPrefab sizeDelta: {prefabRect.sizeDelta}");
+            report.AppendLine($"itemPrefab rect.size: {prefabRect.rect.size}");
+            LayoutElement prefabLayout = controller.itemPrefab.GetComponent<LayoutElement>();
+            report.AppendLine($"itemPrefab LayoutElement: {FormatComponentState(prefabLayout)}");
+        }
+
+        if (controller.contentRoot == null)
+        {
+            report.AppendLine("WARNING: contentRoot is missing.");
+            Debug.Log(report.ToString());
+            return;
+        }
+
+        VerticalLayoutGroup layoutGroup = controller.contentRoot.GetComponent<VerticalLayoutGroup>();
+        ContentSizeFitter sizeFitter = controller.contentRoot.GetComponent<ContentSizeFitter>();
+        report.AppendLine($"contentRoot VerticalLayoutGroup: {FormatComponentState(layoutGroup)}");
+        report.AppendLine($"contentRoot ContentSizeFitter: {FormatComponentState(sizeFitter)}");
+
+        int itemCount = 0;
+        for (int i = 0; i < controller.contentRoot.childCount; i++)
+        {
+            Transform child = controller.contentRoot.GetChild(i);
+            SongSelectItem item = child.GetComponent<SongSelectItem>();
+            if (item == null)
+            {
+                continue;
+            }
+
+            RectTransform itemRect = item.GetComponent<RectTransform>();
+            LayoutElement itemLayout = item.GetComponent<LayoutElement>();
+            report.AppendLine($"Item {itemCount}: {item.name}");
+            if (itemRect == null)
+            {
+                report.AppendLine("  WARNING: Missing RectTransform.");
+            }
+            else
+            {
+                report.AppendLine($"  sizeDelta: {itemRect.sizeDelta}");
+                report.AppendLine($"  rect.size: {itemRect.rect.size}");
+                report.AppendLine($"  localScale: {itemRect.localScale}");
+                report.AppendLine($"  anchorMin: {itemRect.anchorMin}");
+                report.AppendLine($"  anchorMax: {itemRect.anchorMax}");
+                report.AppendLine($"  pivot: {itemRect.pivot}");
+            }
+
+            report.AppendLine($"  LayoutElement: {FormatComponentState(itemLayout)}");
+            itemCount++;
+        }
+
+        report.AppendLine($"Found {itemCount} SongSelectItem instance(s).");
+        Debug.Log(report.ToString());
+    }
+
     private static SongData CreateOrUpdateSong(string assetName, string title, string displayNumber, SongCompletionState state)
     {
         string path = $"{SongDataFolder}/{assetName}.asset";
@@ -219,6 +395,80 @@ public static class SongSelectSetupTools
         return song;
     }
 
+    private static string FormatComponentState(Behaviour component)
+    {
+        if (component == null)
+        {
+            return "missing";
+        }
+
+        return component.enabled ? "present and ENABLED" : "present but disabled";
+    }
+
+    private static void ClearSongSelectPreviewItems(Transform contentRoot)
+    {
+        for (int i = contentRoot.childCount - 1; i >= 0; i--)
+        {
+            Transform child = contentRoot.GetChild(i);
+            bool isSongSelectItem = child.name.Contains("SongSelectItem") || child.GetComponent<SongSelectItem>() != null;
+            if (isSongSelectItem)
+            {
+                UnityEngine.Object.DestroyImmediate(child.gameObject);
+            }
+        }
+    }
+
+    private static Sprite GetCompletionIconForPreview(SongData song, SongSelectController controller)
+    {
+        if (song == null || controller == null)
+        {
+            return null;
+        }
+
+        switch (song.completionState)
+        {
+            case SongCompletionState.Completed:
+                return controller.completedIcon;
+            case SongCompletionState.Played:
+                return controller.playedIcon;
+            default:
+                return controller.newIcon;
+        }
+    }
+
+    private static void ConfigureSongContentLayout(VerticalLayoutGroup layoutGroup)
+    {
+        layoutGroup.spacing = 35f;
+        layoutGroup.padding = new RectOffset(18, 18, 18, 18);
+        layoutGroup.childAlignment = TextAnchor.UpperLeft;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.childControlHeight = true;
+        layoutGroup.childForceExpandWidth = false;
+        layoutGroup.childForceExpandHeight = false;
+    }
+
+    private static void DisableContentAutomaticLayout(Transform contentRoot)
+    {
+        if (contentRoot == null)
+        {
+            return;
+        }
+
+        VerticalLayoutGroup layoutGroup = contentRoot.GetComponent<VerticalLayoutGroup>();
+        if (layoutGroup != null)
+        {
+            layoutGroup.enabled = false;
+            EditorUtility.SetDirty(layoutGroup);
+        }
+
+        ContentSizeFitter sizeFitter = contentRoot.GetComponent<ContentSizeFitter>();
+        if (sizeFitter != null)
+        {
+            sizeFitter.enabled = false;
+            EditorUtility.SetDirty(sizeFitter);
+        }
+    }
+
     private static SongSelectItem CreateOrUpdateSongSelectItemPrefab()
     {
         EnsureFolder("Assets/Prefeb/UI");
@@ -228,6 +478,7 @@ public static class SongSelectSetupTools
         GameObject root = loadedFromPrefab
             ? PrefabUtility.LoadPrefabContents(SongSelectItemPrefabPath)
             : new GameObject("SongSelectItem", typeof(RectTransform));
+        bool configurePlaceholderVisuals = !loadedFromPrefab;
 
         try
         {
@@ -245,38 +496,63 @@ public static class SongSelectSetupTools
                 }
 
                 root = new GameObject("SongSelectItem", typeof(RectTransform));
+                configurePlaceholderVisuals = true;
             }
 
             RectTransform rootRect = EnsureRectTransform(root);
-            rootRect.sizeDelta = new Vector2(420f, 110f);
+            if (configurePlaceholderVisuals)
+            {
+                rootRect.sizeDelta = new Vector2(SongSelectItemPreferredWidth, SongSelectItemPreferredHeight);
+            }
 
             Image background = EnsureComponent<Image>(root);
-            background.color = new Color32(0x7F, 0xB7, 0xAA, 0xFF);
+            if (configurePlaceholderVisuals)
+            {
+                background.color = new Color32(0x7F, 0xB7, 0xAA, 0xFF);
+            }
+
             Button button = EnsureComponent<Button>(root);
             button.targetGraphic = background;
-            LayoutElement layoutElement = EnsureComponent<LayoutElement>(root);
-            layoutElement.preferredHeight = 110f;
-            layoutElement.minHeight = 110f;
 
-            GameObject selectedFrameObject = GetOrCreateUIChild(root.transform, "SelectedFrame");
+            GameObject selectedFrameObject = GetOrCreateUIChild(root.transform, "SelectedFrame", out bool selectedFrameCreated);
             RectTransform selectedFrameRect = EnsureRectTransform(selectedFrameObject);
-            ConfigureStretchRect(selectedFrameRect, Vector2.zero, Vector2.zero);
+            if (configurePlaceholderVisuals || selectedFrameCreated)
+            {
+                ConfigureStretchRect(selectedFrameRect, Vector2.zero, Vector2.zero);
+            }
+
             Image selectedFrame = EnsureComponent<Image>(selectedFrameObject);
-            selectedFrame.color = new Color(1f, 1f, 1f, 0.28f);
-            selectedFrameObject.SetActive(false);
+            if (configurePlaceholderVisuals || selectedFrameCreated)
+            {
+                selectedFrame.color = new Color(1f, 1f, 1f, 0.28f);
+                selectedFrameObject.SetActive(false);
+            }
 
-            TextMeshProUGUI titleText = GetOrCreateTMPText(root.transform, "TitleText");
-            ConfigureTextRect(titleText, "TITLE 001", 34f, new Vector2(28f, 0f), new Vector2(250f, 80f), TextAlignmentOptions.MidlineLeft);
+            TextMeshProUGUI titleText = GetOrCreateTMPText(root.transform, "TitleText", out bool titleCreated);
+            if (configurePlaceholderVisuals || titleCreated)
+            {
+                ConfigureTextRect(titleText, "TITLE 001", 34f, new Vector2(28f, 0f), new Vector2(250f, 80f), TextAlignmentOptions.MidlineLeft);
+            }
 
-            TextMeshProUGUI numberText = GetOrCreateTMPText(root.transform, "NumberText");
-            ConfigureTextRect(numberText, "001", 26f, new Vector2(330f, 0f), new Vector2(70f, 70f), TextAlignmentOptions.Center);
+            TextMeshProUGUI numberText = GetOrCreateTMPText(root.transform, "NumberText", out bool numberCreated);
+            if (configurePlaceholderVisuals || numberCreated)
+            {
+                ConfigureTextRect(numberText, "001", 26f, new Vector2(330f, 0f), new Vector2(70f, 70f), TextAlignmentOptions.Center);
+            }
 
-            GameObject iconObject = GetOrCreateUIChild(root.transform, "CompletionIcon");
+            GameObject iconObject = GetOrCreateUIChild(root.transform, "CompletionIcon", out bool iconCreated);
             RectTransform iconRect = EnsureRectTransform(iconObject);
-            ConfigureAnchoredRect(iconRect, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-32f, 0f), new Vector2(28f, 28f), new Vector2(0.5f, 0.5f));
+            if (configurePlaceholderVisuals || iconCreated)
+            {
+                ConfigureAnchoredRect(iconRect, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-32f, 0f), new Vector2(28f, 28f), new Vector2(0.5f, 0.5f));
+            }
+
             Image iconImage = EnsureComponent<Image>(iconObject);
-            iconImage.color = Color.white;
-            iconImage.enabled = false;
+            if (configurePlaceholderVisuals || iconCreated)
+            {
+                iconImage.color = Color.white;
+                iconImage.enabled = false;
+            }
 
             SongSelectItem item = EnsureComponent<SongSelectItem>(root);
             item.button = button;
@@ -467,6 +743,21 @@ public static class SongSelectSetupTools
         return childObject;
     }
 
+    private static GameObject GetOrCreateUIChild(Transform parent, string name, out bool created)
+    {
+        Transform child = parent.Find(name);
+        if (child != null)
+        {
+            created = false;
+            return child.gameObject;
+        }
+
+        GameObject childObject = new GameObject(name, typeof(RectTransform));
+        childObject.transform.SetParent(parent, false);
+        created = true;
+        return childObject;
+    }
+
     private static T EnsureComponent<T>(GameObject target) where T : Component
     {
         T component = target.GetComponent<T>();
@@ -492,6 +783,12 @@ public static class SongSelectSetupTools
     private static TextMeshProUGUI GetOrCreateTMPText(Transform parent, string name)
     {
         GameObject textObject = GetOrCreateUIChild(parent, name);
+        return EnsureComponent<TextMeshProUGUI>(textObject);
+    }
+
+    private static TextMeshProUGUI GetOrCreateTMPText(Transform parent, string name, out bool created)
+    {
+        GameObject textObject = GetOrCreateUIChild(parent, name, out created);
         return EnsureComponent<TextMeshProUGUI>(textObject);
     }
 
