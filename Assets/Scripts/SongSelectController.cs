@@ -14,6 +14,26 @@ public class SongSelectController : MonoBehaviour
     public SongSelectItem itemPrefab;
     public ScrollRect scrollRect;
 
+    [Header("Scrollbar Visual Control")]
+    public Scrollbar verticalScrollbar;
+    public RectTransform scrollbarSlidingArea;
+    public RectTransform scrollbarHandle;
+    public bool useFixedScrollbarHandleSize = true;
+    public float fixedHandleHeight = 80f;
+    public float scrollbarTopPadding = 0f;
+    public float scrollbarBottomPadding = 0f;
+    public bool forceScrollbarRaycastTargets = true;
+
+    [Header("Custom Scrollbar Handle")]
+    public bool useCustomScrollbarHandle = true;
+    public RectTransform customScrollbarHandle;
+    public float customHandleTopY = 0f;
+    public float customHandleBottomY = -500f;
+    public bool useFixedCustomHandleSize = true;
+    public float customHandleWidth = 24f;
+    public float customHandleHeight = 80f;
+    public bool updateHandleInEditMode = true;
+
     [Header("Completion Icons")]
     public Sprite newIcon;
     public Sprite playedIcon;
@@ -60,6 +80,16 @@ public class SongSelectController : MonoBehaviour
         }
 
         BuildList();
+        SetupCustomScrollbarHandle();
+        SyncCustomHandleToScrollRect();
+    }
+
+    private void Update()
+    {
+        if (Application.isPlaying && useCustomScrollbarHandle)
+        {
+            SyncCustomHandleToScrollRect();
+        }
     }
 
     private void OnDestroy()
@@ -74,11 +104,20 @@ public class SongSelectController : MonoBehaviour
     {
         items.Clear();
         selectedIndex = -1;
+        if (useCustomScrollbarHandle)
+        {
+            SetupCustomScrollbarHandle();
+        }
+        else
+        {
+            PrepareScrollbar();
+        }
 
         if (contentRoot == null || itemPrefab == null)
         {
             Debug.LogWarning("[SongSelectController] contentRoot or itemPrefab is missing.", this);
             RefreshSelectButtonState();
+            RefreshScrollbarVisuals();
             return;
         }
 
@@ -115,7 +154,238 @@ public class SongSelectController : MonoBehaviour
             ApplyManualLayoutToItems(items);
         }
 
+        RefreshScrollbarVisuals();
         RefreshSelectButtonState();
+    }
+
+    public void RefreshScrollbarVisuals()
+    {
+        if (useCustomScrollbarHandle)
+        {
+            SetupCustomScrollbarHandle();
+            SyncCustomHandleToScrollRect();
+            return;
+        }
+
+        PrepareScrollbar();
+        ApplyScrollbarTravelRange();
+        ApplyFixedScrollbarHandle();
+    }
+
+    public void SetupCustomScrollbarHandle()
+    {
+        if (customScrollbarHandle == null)
+        {
+            customScrollbarHandle = scrollbarHandle;
+        }
+
+        if (customScrollbarHandle == null && verticalScrollbar != null)
+        {
+            customScrollbarHandle = verticalScrollbar.handleRect;
+        }
+
+        if (customScrollbarHandle == null && verticalScrollbar != null)
+        {
+            Transform slidingAreaTransform = verticalScrollbar.transform.Find("Sliding Area");
+            RectTransform slidingArea = slidingAreaTransform as RectTransform;
+            Transform handleTransform = slidingArea != null ? slidingArea.Find("Handle") : null;
+            customScrollbarHandle = handleTransform as RectTransform;
+        }
+
+        if (customScrollbarHandle != null)
+        {
+            Image handleImage = customScrollbarHandle.GetComponent<Image>();
+            if (handleImage != null)
+            {
+                handleImage.raycastTarget = true;
+            }
+
+            SongSelectScrollbarHandle handle = customScrollbarHandle.GetComponent<SongSelectScrollbarHandle>();
+            if (handle == null)
+            {
+                handle = customScrollbarHandle.gameObject.AddComponent<SongSelectScrollbarHandle>();
+            }
+
+            handle.controller = this;
+        }
+
+        if (scrollRect != null)
+        {
+            scrollRect.vertical = true;
+            scrollRect.horizontal = false;
+            if (useCustomScrollbarHandle)
+            {
+                scrollRect.verticalScrollbar = null;
+            }
+        }
+
+        if (useCustomScrollbarHandle && verticalScrollbar != null)
+        {
+            verticalScrollbar.interactable = false;
+            verticalScrollbar.handleRect = null;
+            verticalScrollbar.targetGraphic = null;
+        }
+
+        ApplyCustomHandleSize();
+        SyncCustomHandleToScrollRect();
+    }
+
+    private void ApplyCustomHandleSize()
+    {
+        if (customScrollbarHandle == null)
+        {
+            return;
+        }
+
+        customScrollbarHandle.anchorMin = new Vector2(0.5f, 0.5f);
+        customScrollbarHandle.anchorMax = new Vector2(0.5f, 0.5f);
+        customScrollbarHandle.pivot = new Vector2(0.5f, 0.5f);
+        customScrollbarHandle.localScale = Vector3.one;
+        if (useFixedCustomHandleSize)
+        {
+            customScrollbarHandle.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(1f, customHandleWidth));
+            customScrollbarHandle.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(1f, customHandleHeight));
+        }
+    }
+
+    public void SyncCustomHandleToScrollRect()
+    {
+        if (!useCustomScrollbarHandle || scrollRect == null || customScrollbarHandle == null)
+        {
+            return;
+        }
+
+        float normalized = scrollRect.verticalNormalizedPosition;
+        float y = Mathf.Lerp(customHandleBottomY, customHandleTopY, normalized);
+        Vector2 position = customScrollbarHandle.anchoredPosition;
+        position.y = y;
+        customScrollbarHandle.anchoredPosition = position;
+    }
+
+    public void SetScrollFromCustomHandleY(float handleY)
+    {
+        if (scrollRect == null)
+        {
+            return;
+        }
+
+        float clampedY = ClampCustomHandleY(handleY);
+        float normalized = Mathf.InverseLerp(customHandleBottomY, customHandleTopY, clampedY);
+        scrollRect.verticalNormalizedPosition = Mathf.Clamp01(normalized);
+        SyncCustomHandleToScrollRect();
+    }
+
+    public float ClampCustomHandleY(float y)
+    {
+        float minY = Mathf.Min(customHandleBottomY, customHandleTopY);
+        float maxY = Mathf.Max(customHandleBottomY, customHandleTopY);
+        return Mathf.Clamp(y, minY, maxY);
+    }
+
+    public void PrepareScrollbar()
+    {
+        if (useCustomScrollbarHandle)
+        {
+            SetupCustomScrollbarHandle();
+            return;
+        }
+
+        if (verticalScrollbar == null && scrollRect != null && scrollRect.verticalScrollbar != null)
+        {
+            verticalScrollbar = scrollRect.verticalScrollbar;
+        }
+
+        if (scrollRect != null)
+        {
+            scrollRect.vertical = true;
+            scrollRect.horizontal = false;
+            if (verticalScrollbar != null)
+            {
+                scrollRect.verticalScrollbar = verticalScrollbar;
+                scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+            }
+        }
+
+        if (verticalScrollbar == null)
+        {
+            return;
+        }
+
+        verticalScrollbar.interactable = true;
+        if (verticalScrollbar.direction != Scrollbar.Direction.BottomToTop &&
+            verticalScrollbar.direction != Scrollbar.Direction.TopToBottom)
+        {
+            verticalScrollbar.direction = Scrollbar.Direction.BottomToTop;
+        }
+
+        if (scrollbarSlidingArea == null)
+        {
+            Transform slidingAreaTransform = verticalScrollbar.transform.Find("Sliding Area");
+            scrollbarSlidingArea = slidingAreaTransform as RectTransform;
+        }
+
+        if (scrollbarHandle == null)
+        {
+            scrollbarHandle = verticalScrollbar.handleRect;
+        }
+
+        if (scrollbarHandle == null && scrollbarSlidingArea != null)
+        {
+            Transform handleTransform = scrollbarSlidingArea.Find("Handle");
+            scrollbarHandle = handleTransform as RectTransform;
+        }
+
+        if (scrollbarHandle != null)
+        {
+            verticalScrollbar.handleRect = scrollbarHandle;
+            Image handleImage = scrollbarHandle.GetComponent<Image>();
+            if (handleImage != null)
+            {
+                verticalScrollbar.targetGraphic = handleImage;
+            }
+        }
+
+        if (forceScrollbarRaycastTargets)
+        {
+            SetRaycastTarget(verticalScrollbar.GetComponent<Image>(), true);
+            if (scrollbarSlidingArea != null)
+            {
+                SetRaycastTarget(scrollbarSlidingArea.GetComponent<Image>(), true);
+            }
+
+            if (scrollbarHandle != null)
+            {
+                SetRaycastTarget(scrollbarHandle.GetComponent<Image>(), true);
+            }
+        }
+    }
+
+    public void ApplyScrollbarTravelRange()
+    {
+        if (useCustomScrollbarHandle || scrollbarSlidingArea == null)
+        {
+            return;
+        }
+
+        Vector2 offsetMin = scrollbarSlidingArea.offsetMin;
+        Vector2 offsetMax = scrollbarSlidingArea.offsetMax;
+        scrollbarSlidingArea.anchorMin = new Vector2(0f, 0f);
+        scrollbarSlidingArea.anchorMax = new Vector2(1f, 1f);
+        scrollbarSlidingArea.pivot = new Vector2(0.5f, 0.5f);
+        scrollbarSlidingArea.offsetMin = new Vector2(offsetMin.x, scrollbarBottomPadding);
+        scrollbarSlidingArea.offsetMax = new Vector2(offsetMax.x, -scrollbarTopPadding);
+        ApplyFixedScrollbarHandle();
+    }
+
+    public void ApplyFixedScrollbarHandle()
+    {
+        if (useCustomScrollbarHandle || !useFixedScrollbarHandleSize || verticalScrollbar == null || scrollbarHandle == null)
+        {
+            return;
+        }
+
+        verticalScrollbar.size = 0.0001f;
+        scrollbarHandle.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(1f, fixedHandleHeight));
     }
 
     public void DisableAutomaticContentLayout()
@@ -192,7 +462,7 @@ public class SongSelectController : MonoBehaviour
         }
     }
 
-    public void RelayoutExistingPreviewItems()
+    public void RelayoutExistingPreviewItems(bool refreshScrollbar = true)
     {
         if (contentRoot == null)
         {
@@ -210,6 +480,10 @@ public class SongSelectController : MonoBehaviour
         }
 
         ApplyManualLayoutToItems(existingItems);
+        if (refreshScrollbar)
+        {
+            RefreshScrollbarVisuals();
+        }
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)
@@ -345,6 +619,14 @@ public class SongSelectController : MonoBehaviour
         }
     }
 
+    private void SetRaycastTarget(Graphic graphic, bool value)
+    {
+        if (graphic != null)
+        {
+            graphic.raycastTarget = value;
+        }
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -364,7 +646,7 @@ public class SongSelectController : MonoBehaviour
             return;
         }
 
-        RelayoutExistingPreviewItems();
+        RelayoutExistingPreviewItems(updateHandleInEditMode);
     }
 #endif
 }

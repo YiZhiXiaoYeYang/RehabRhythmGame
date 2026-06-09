@@ -130,6 +130,9 @@ public static class SongSelectSetupTools
         controller.contentRoot = contentRect;
         controller.itemPrefab = itemPrefab;
         controller.scrollRect = scrollRect;
+        controller.verticalScrollbar = scrollbar;
+        controller.scrollbarSlidingArea = scrollbar.transform.Find("Sliding Area") as RectTransform;
+        controller.scrollbarHandle = scrollbar.handleRect;
         controller.selectButton = selectButton;
         controller.selectButtonCanvasGroup = selectCanvasGroup;
         controller.gameplaySceneName = "04_Gameplay";
@@ -138,6 +141,7 @@ public static class SongSelectSetupTools
         controller.itemSpacing = 30f;
         controller.preservePrefabSize = true;
         DisableContentAutomaticLayout(controller.contentRoot);
+        controller.RefreshScrollbarVisuals();
         EditorUtility.SetDirty(controller);
 
         UpdateBuildSettingsForGameplay();
@@ -377,6 +381,237 @@ public static class SongSelectSetupTools
         Debug.Log(report.ToString());
     }
 
+    [MenuItem(MenuRoot + "/Fix Song Select Scrollbar")]
+    public static void FixSongSelectScrollbar()
+    {
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        if (controller == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] No SongSelectController found in the current scene.");
+            return;
+        }
+
+        EnsureEventSystem();
+        Canvas canvas = controller.GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        }
+
+        if (canvas != null)
+        {
+            EnsureComponent<GraphicRaycaster>(canvas.gameObject);
+        }
+
+        controller.PrepareScrollbar();
+        controller.ApplyScrollbarTravelRange();
+        controller.ApplyFixedScrollbarHandle();
+
+        EditorUtility.SetDirty(controller);
+        if (controller.verticalScrollbar != null)
+        {
+            EditorUtility.SetDirty(controller.verticalScrollbar);
+        }
+
+        if (controller.scrollbarSlidingArea != null)
+        {
+            EditorUtility.SetDirty(controller.scrollbarSlidingArea);
+        }
+
+        if (controller.scrollbarHandle != null)
+        {
+            EditorUtility.SetDirty(controller.scrollbarHandle);
+        }
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[SongSelectSetupTools] Fixed Song Select Scrollbar bindings and visual range.");
+    }
+
+    [MenuItem(MenuRoot + "/Debug Song Select Scrollbar")]
+    public static void DebugSongSelectScrollbar()
+    {
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        StringBuilder report = new StringBuilder();
+        report.AppendLine("[SongSelectSetupTools] Debug Song Select Scrollbar");
+
+        if (controller == null)
+        {
+            report.AppendLine("WARNING: No SongSelectController found in the current scene.");
+            Debug.LogWarning(report.ToString());
+            return;
+        }
+
+        report.AppendLine($"scrollRect exists: {controller.scrollRect != null}");
+        report.AppendLine($"verticalScrollbar exists: {controller.verticalScrollbar != null}");
+        report.AppendLine($"scrollRect.verticalScrollbar correct: {controller.scrollRect != null && controller.scrollRect.verticalScrollbar == controller.verticalScrollbar}");
+        report.AppendLine($"verticalScrollbar.handleRect correct: {controller.verticalScrollbar != null && controller.verticalScrollbar.handleRect == controller.scrollbarHandle}");
+
+        if (controller.scrollbarSlidingArea != null)
+        {
+            RectTransform slidingArea = controller.scrollbarSlidingArea;
+            report.AppendLine($"slidingArea anchorMin: {slidingArea.anchorMin}");
+            report.AppendLine($"slidingArea anchorMax: {slidingArea.anchorMax}");
+            report.AppendLine($"slidingArea offsetMin: {slidingArea.offsetMin}");
+            report.AppendLine($"slidingArea offsetMax: {slidingArea.offsetMax}");
+            report.AppendLine($"slidingArea rect.size: {slidingArea.rect.size}");
+            report.AppendLine($"slidingArea Image raycastTarget: {FormatRaycastTarget(slidingArea.GetComponent<Image>())}");
+        }
+        else
+        {
+            report.AppendLine("WARNING: scrollbarSlidingArea is missing.");
+        }
+
+        if (controller.scrollbarHandle != null)
+        {
+            RectTransform handle = controller.scrollbarHandle;
+            report.AppendLine($"handle sizeDelta: {handle.sizeDelta}");
+            report.AppendLine($"handle rect.size: {handle.rect.size}");
+            report.AppendLine($"handle Image raycastTarget: {FormatRaycastTarget(handle.GetComponent<Image>())}");
+        }
+        else
+        {
+            report.AppendLine("WARNING: scrollbarHandle is missing.");
+        }
+
+        if (controller.verticalScrollbar != null)
+        {
+            report.AppendLine($"verticalScrollbar value: {controller.verticalScrollbar.value}");
+            report.AppendLine($"verticalScrollbar size: {controller.verticalScrollbar.size}");
+            report.AppendLine($"verticalScrollbar interactable: {controller.verticalScrollbar.interactable}");
+            report.AppendLine($"verticalScrollbar direction: {controller.verticalScrollbar.direction}");
+            report.AppendLine($"verticalScrollbar Image raycastTarget: {FormatRaycastTarget(controller.verticalScrollbar.GetComponent<Image>())}");
+        }
+
+        report.AppendLine($"EventSystem exists: {UnityEngine.Object.FindObjectOfType<EventSystem>() != null}");
+        Canvas canvas = controller.GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        }
+
+        report.AppendLine($"Canvas GraphicRaycaster exists: {canvas != null && canvas.GetComponent<GraphicRaycaster>() != null}");
+        report.AppendLine("NOTE: If dragging still fails, check whether another UI object visually above the scrollbar is blocking raycasts.");
+        Debug.Log(report.ToString());
+    }
+
+    [MenuItem(MenuRoot + "/Fix Song Select Custom Scrollbar")]
+    public static void FixSongSelectCustomScrollbar()
+    {
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        if (controller == null)
+        {
+            Debug.LogWarning("[SongSelectSetupTools] No SongSelectController found in the current scene.");
+            return;
+        }
+
+        EnsureEventSystem();
+        Canvas canvas = controller.GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        }
+
+        if (canvas != null)
+        {
+            EnsureComponent<GraphicRaycaster>(canvas.gameObject);
+        }
+
+        if (controller.customScrollbarHandle == null)
+        {
+            controller.customScrollbarHandle = controller.scrollbarHandle;
+        }
+
+        if (controller.customScrollbarHandle == null && controller.verticalScrollbar != null)
+        {
+            RectTransform slidingArea = controller.verticalScrollbar.transform.Find("Sliding Area") as RectTransform;
+            Transform handle = slidingArea != null ? slidingArea.Find("Handle") : null;
+            controller.customScrollbarHandle = handle as RectTransform;
+        }
+
+        if (controller.customScrollbarHandle != null)
+        {
+            Image handleImage = controller.customScrollbarHandle.GetComponent<Image>();
+            if (handleImage != null)
+            {
+                handleImage.raycastTarget = true;
+                EditorUtility.SetDirty(handleImage);
+            }
+
+            SongSelectScrollbarHandle handleScript = controller.customScrollbarHandle.GetComponent<SongSelectScrollbarHandle>();
+            if (handleScript == null)
+            {
+                handleScript = controller.customScrollbarHandle.gameObject.AddComponent<SongSelectScrollbarHandle>();
+            }
+
+            handleScript.controller = controller;
+            EditorUtility.SetDirty(handleScript);
+        }
+
+        controller.useCustomScrollbarHandle = true;
+        controller.SetupCustomScrollbarHandle();
+
+        EditorUtility.SetDirty(controller);
+        if (controller.customScrollbarHandle != null)
+        {
+            EditorUtility.SetDirty(controller.customScrollbarHandle);
+        }
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[SongSelectSetupTools] Fixed Song Select custom scrollbar handle.");
+    }
+
+    [MenuItem(MenuRoot + "/Debug Song Select Custom Scrollbar")]
+    public static void DebugSongSelectCustomScrollbar()
+    {
+        SongSelectController controller = UnityEngine.Object.FindObjectOfType<SongSelectController>();
+        StringBuilder report = new StringBuilder();
+        report.AppendLine("[SongSelectSetupTools] Debug Song Select Custom Scrollbar");
+
+        if (controller == null)
+        {
+            report.AppendLine("WARNING: No SongSelectController found in the current scene.");
+            Debug.LogWarning(report.ToString());
+            return;
+        }
+
+        report.AppendLine($"useCustomScrollbarHandle: {controller.useCustomScrollbarHandle}");
+        report.AppendLine($"scrollRect exists: {controller.scrollRect != null}");
+        report.AppendLine($"customScrollbarHandle exists: {controller.customScrollbarHandle != null}");
+        report.AppendLine($"customHandleTopY: {controller.customHandleTopY}");
+        report.AppendLine($"customHandleBottomY: {controller.customHandleBottomY}");
+        report.AppendLine($"customHandleWidth: {controller.customHandleWidth}");
+        report.AppendLine($"customHandleHeight: {controller.customHandleHeight}");
+
+        if (controller.scrollRect != null)
+        {
+            report.AppendLine($"scrollRect.verticalNormalizedPosition: {controller.scrollRect.verticalNormalizedPosition}");
+            report.AppendLine($"scrollRect.verticalScrollbar is null: {controller.scrollRect.verticalScrollbar == null}");
+        }
+
+        if (controller.customScrollbarHandle != null)
+        {
+            RectTransform handle = controller.customScrollbarHandle;
+            report.AppendLine($"handle anchoredPosition: {handle.anchoredPosition}");
+            report.AppendLine($"handle sizeDelta: {handle.sizeDelta}");
+            report.AppendLine($"handle rect.size: {handle.rect.size}");
+            report.AppendLine($"handle localScale: {handle.localScale}");
+            report.AppendLine($"handle anchorMin: {handle.anchorMin}");
+            report.AppendLine($"handle anchorMax: {handle.anchorMax}");
+            report.AppendLine($"handle pivot: {handle.pivot}");
+            report.AppendLine($"handle Image raycastTarget: {FormatRaycastTarget(handle.GetComponent<Image>())}");
+            report.AppendLine($"handle has SongSelectScrollbarHandle: {handle.GetComponent<SongSelectScrollbarHandle>() != null}");
+        }
+
+        if (controller.verticalScrollbar != null)
+        {
+            report.AppendLine($"verticalScrollbar.interactable: {controller.verticalScrollbar.interactable}");
+            report.AppendLine($"verticalScrollbar.handleRect is null: {controller.verticalScrollbar.handleRect == null}");
+            report.AppendLine($"verticalScrollbar.targetGraphic is null: {controller.verticalScrollbar.targetGraphic == null}");
+        }
+
+        Debug.Log(report.ToString());
+    }
+
     private static SongData CreateOrUpdateSong(string assetName, string title, string displayNumber, SongCompletionState state)
     {
         string path = $"{SongDataFolder}/{assetName}.asset";
@@ -403,6 +638,16 @@ public static class SongSelectSetupTools
         }
 
         return component.enabled ? "present and ENABLED" : "present but disabled";
+    }
+
+    private static string FormatRaycastTarget(Graphic graphic)
+    {
+        if (graphic == null)
+        {
+            return "missing Image/Graphic";
+        }
+
+        return graphic.raycastTarget ? "true" : "false";
     }
 
     private static void ClearSongSelectPreviewItems(Transform contentRoot)
