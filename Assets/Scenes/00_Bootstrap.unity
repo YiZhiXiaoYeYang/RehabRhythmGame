@@ -244,8 +244,8 @@ MonoBehaviour:
   transitionCanvas: {fileID: 995182489}
   fadeImage: {fileID: 263906221}
   fadeColor: {r: 1, g: 1, b: 1, a: 1}
-  fadeOutDuration: 0.25
-  fadeInDuration: 0.25
+  fadeOutDuration: 0.4
+  fadeInDuration: 0.4
   isTransitioning: 0
 --- !u!114 &887179995
 MonoBehaviour:
@@ -260,6 +260,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectedSongIndex: 0
+  selectedSongId: 
   selectedSongTitle: 
   selectedHand: Left
   selectedFinger: Index
@@ -380,7 +381,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 9999
   m_TargetDisplay: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

@@ -80,13 +80,14 @@ public static class MenuSceneSetupTools
         CanvasScaler transitionCanvasScaler = EnsureComponent<CanvasScaler>(transitionCanvasObject);
         EnsureComponent<GraphicRaycaster>(transitionCanvasObject);
         ConfigureOverlayCanvas(transitionCanvas, transitionCanvasScaler);
+        transitionCanvas.sortingOrder = 9999;
 
         GameObject fadeImageObject = GetOrCreateUIChild(transitionCanvasObject.transform, "FadeImage");
         RectTransform fadeImageRect = EnsureRectTransform(fadeImageObject);
         Image fadeImage = EnsureComponent<Image>(fadeImageObject);
         ConfigureFullScreenRect(fadeImageRect);
         fadeImage.color = new Color(1f, 1f, 1f, 0f);
-        fadeImage.raycastTarget = false;
+        fadeImage.raycastTarget = true;
 
         transitionManager.transitionCanvas = transitionCanvas;
         transitionManager.fadeImage = fadeImage;
