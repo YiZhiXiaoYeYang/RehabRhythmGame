@@ -92,6 +92,45 @@ public static class HandSettingSetupTools
         Debug.Log("[HandSettingSetupTools] Setup Hand Setting Scene completed. Use 03_HandSetting to test BACK, START, and hand selection.");
     }
 
+    [MenuItem(MenuRoot + "/Add Hand Selection Pulse")]
+    public static void AddHandSelectionPulse()
+    {
+        HandSettingController controller = Object.FindObjectOfType<HandSettingController>();
+        if (controller == null)
+        {
+            Debug.LogWarning("[HandSettingSetupTools] No HandSettingController found in the current scene.");
+            return;
+        }
+
+        AddOrConfigurePulse(controller.leftSelectedRing, "leftSelectedRing");
+        AddOrConfigurePulse(controller.rightSelectedRing, "rightSelectedRing");
+
+        EditorUtility.SetDirty(controller);
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[HandSettingSetupTools] Added/updated UIPulseAlpha on hand selection objects.");
+    }
+
+    private static void AddOrConfigurePulse(GameObject target, string label)
+    {
+        if (target == null)
+        {
+            Debug.LogWarning($"[HandSettingSetupTools] Missing {label}; pulse was not added.");
+            return;
+        }
+
+        UIPulseAlpha pulse = target.GetComponent<UIPulseAlpha>();
+        if (pulse == null)
+        {
+            pulse = target.AddComponent<UIPulseAlpha>();
+        }
+
+        pulse.minAlpha = 0.45f;
+        pulse.maxAlpha = 1f;
+        pulse.speed = 1.5f;
+        pulse.playOnEnable = true;
+        EditorUtility.SetDirty(pulse);
+    }
+
     private static Button CreateOrReuseButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, Color color)
     {
         GameObject buttonObject = GetOrCreateUIChild(parent, name, out bool created);
