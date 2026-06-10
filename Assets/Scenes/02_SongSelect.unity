@@ -2523,7 +2523,7 @@ MonoBehaviour:
   completedIcon: {fileID: 21300000, guid: 8f3f0b7e9097c194d8d2315985209877, type: 3}
   selectButton: {fileID: 780615255}
   selectButtonCanvasGroup: {fileID: 780615252}
-  gameplaySceneName: 04_Gameplay
+  gameplaySceneName: 03_HandSetting
   selectButtonEnabledAlpha: 1
   selectButtonDisabledAlpha: 0.4
   keepSelectButtonInteractableForVisual: 1
