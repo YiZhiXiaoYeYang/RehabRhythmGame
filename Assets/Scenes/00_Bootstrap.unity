@@ -280,6 +280,7 @@ Transform:
   m_Children:
   - {fileID: 995182486}
   - {fileID: 2100814418}
+  - {fileID: 1890939834}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &995182485
@@ -384,6 +385,63 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 9999
   m_TargetDisplay: 0
+--- !u!1 &1890939833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1890939834}
+  - component: {fileID: 1890939835}
+  m_Layer: 0
+  m_Name: ClickEffectManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1890939834
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1890939833}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 887179996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1890939835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1890939833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22ae0ad565088ea459ee5ca65884aa38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rippleSprite: {fileID: 21300000, guid: 2cc18701c3e9f8b4c8e3eca3ea003651, type: 3}
+  rippleColor: {r: 1, g: 1, b: 1, a: 1}
+  rippleBaseSize: {x: 90, y: 90}
+  startScale: 0.35
+  endScale: 1.15
+  startAlpha: 0.65
+  duration: 0.35
+  enabledSceneNames:
+  - 01_Start
+  - 02_SongSelect
+  - 03_HandSetting
+  maxActiveRipples: 8
+  canvasSortingOrder: 9000
 --- !u!1 &2100814417
 GameObject:
   m_ObjectHideFlags: 0
