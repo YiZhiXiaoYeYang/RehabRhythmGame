@@ -3923,9 +3923,9 @@ MonoBehaviour:
   longNoteLength: 2
   judgmentArea: {fileID: 1492959319}
   interactRadius: 0.5
-  hitWindowX: 0.45
-  missWindowX: 0.6
-  holdStartWindowX: 0.45
+  hitWindowX: 0.55
+  missWindowX: 0.65
+  holdStartWindowX: 0.55
   drawJudgmentGizmos: 1
   score: 0
   combo: 0
@@ -4855,20 +4855,50 @@ MonoBehaviour:
   portName: COM5
   baudRate: 115200
   readTimeout: 100
-  lightPressThreshold: 35
-  normalPressThreshold: 45
-  hardPressThreshold: 60
-  longPressDuration: 0.45
+  pressThreshold: 4
+  hardPressThreshold: 40
+  releaseThreshold: 2
+  useBaselineCalibration: 1
+  autoCalibrateOnStart: 1
+  autoCalibrateDuration: 1
+  recalibrateKey: 99
+  baselineValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  effectiveValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  minCalibrationSamples: 10
   trackValues:
   - 0
   - 0
   - 0
   - 0
   trackStates: 00000000000000000000000000000000
-  logRawValues: 1
+  heldDurations:
+  - 0
+  - 0
+  - 0
+  - 0
+  pressedThisFrame: 00000000
+  releasedThisFrame: 00000000
+  hardPressedThisFrame: 00000000
+  logRawValues: 0
   rawLogInterval: 0.5
+  logEffectiveValues: 0
+  effectiveLogInterval: 0.5
   logDataRate: 1
   dataRateLogInterval: 1
+  logCompactStatus: 1
+  compactStatusInterval: 0.5
+  baselineReady: 0
+  lastPacketTime: 0
+  totalParsedPackets: 0
+  lastParsedPacket: 
 --- !u!4 &1212694095
 Transform:
   m_ObjectHideFlags: 0
