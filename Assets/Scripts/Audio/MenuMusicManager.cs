@@ -69,14 +69,14 @@ public class MenuMusicManager : MonoBehaviour
     {
         if (IsMenuScene(sceneName))
         {
-            Debug.Log($"[MenuMusicManager] Menu scene detected: {sceneName}. Fading in menu music.", this);
+            ProjectDebug.Log($"[MenuMusicManager] Menu scene detected: {sceneName}. Fading in menu music.", DebugChannel.Audio, this);
             FadeInToMenuMusic();
             return;
         }
 
         if (sceneName == gameplaySceneName)
         {
-            Debug.Log("[MenuMusicManager] Gameplay scene detected. Fading out menu music.", this);
+            ProjectDebug.Log("[MenuMusicManager] Gameplay scene detected. Fading out menu music.", DebugChannel.Audio, this);
             FadeOutAndStop();
             return;
         }
@@ -91,7 +91,7 @@ public class MenuMusicManager : MonoBehaviour
     {
         if (menuMusicClip == null)
         {
-            Debug.LogWarning("[MenuMusicManager] menuMusicClip is missing.", this);
+            ProjectDebug.LogWarning("[MenuMusicManager] menuMusicClip is missing.", DebugChannel.Audio, this);
             return;
         }
 
@@ -183,7 +183,7 @@ public class MenuMusicManager : MonoBehaviour
         if (mainCamera != null)
         {
             mainCamera.gameObject.AddComponent<AudioListener>();
-            Debug.Log($"[MenuMusicManager] Added AudioListener to {mainCamera.gameObject.name}.", mainCamera);
+            ProjectDebug.Log($"[MenuMusicManager] Added AudioListener to {mainCamera.gameObject.name}.", DebugChannel.Audio, mainCamera);
             return;
         }
 
@@ -191,13 +191,13 @@ public class MenuMusicManager : MonoBehaviour
         if (camera != null)
         {
             camera.gameObject.AddComponent<AudioListener>();
-            Debug.Log($"[MenuMusicManager] Added AudioListener to {camera.gameObject.name}.", camera);
+            ProjectDebug.Log($"[MenuMusicManager] Added AudioListener to {camera.gameObject.name}.", DebugChannel.Audio, camera);
             return;
         }
 
         GameObject listenerObject = new GameObject("RuntimeAudioListener");
         listenerObject.AddComponent<AudioListener>();
-        Debug.Log("[MenuMusicManager] Added AudioListener to RuntimeAudioListener.", listenerObject);
+        ProjectDebug.Log("[MenuMusicManager] Added AudioListener to RuntimeAudioListener.", DebugChannel.Audio, listenerObject);
     }
 
     private bool IsMenuScene(string sceneName)

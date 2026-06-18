@@ -184,7 +184,7 @@ public class ProgressiveBackgroundController : MonoBehaviour
     {
         if (warningKeys.Add(key))
         {
-            Debug.LogWarning(message, this);
+            ProjectDebug.LogWarning(message, DebugChannel.UI, this);
         }
     }
 }

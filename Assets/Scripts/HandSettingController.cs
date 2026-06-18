@@ -108,7 +108,7 @@ public class HandSettingController : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.LogWarning("[HandSettingController] Scene name is empty.", this);
+            ProjectDebug.LogWarning("[HandSettingController] Scene name is empty.", DebugChannel.UI, this);
             return;
         }
 

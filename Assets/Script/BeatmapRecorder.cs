@@ -103,19 +103,19 @@ public class BeatmapRecorder : MonoBehaviour
 
             if (audioSource == null)
             {
-                Debug.LogWarning("[BeatmapRecorder] 未找到AudioSource组件，请在Inspector中分配");
+                ProjectDebug.LogWarning("[BeatmapRecorder] 未找到AudioSource组件，请在Inspector中分配", DebugChannel.Rhythm);
             }
             else
             {
-                Debug.Log($"[BeatmapRecorder] 已自动找到AudioSource: {audioSource.name}");
+                ProjectDebug.Log($"[BeatmapRecorder] 已自动找到AudioSource: {audioSource.name}", DebugChannel.Rhythm);
             }
         }
 
-        Debug.Log($"[BeatmapRecorder] 初始化完成，输出路径: {outputPath}");
-        Debug.Log("[BeatmapRecorder] 操作说明：");
-        Debug.Log("  空格键：在音乐播放时录制音符时间点");
-        Debug.Log("  S键：将录制的谱面保存为JSON文件");
-        Debug.Log("  R键：清空当前录制的谱面数据");
+        ProjectDebug.Log($"[BeatmapRecorder] 初始化完成，输出路径: {outputPath}", DebugChannel.Rhythm);
+        ProjectDebug.Log("[BeatmapRecorder] 操作说明：", DebugChannel.Rhythm);
+        ProjectDebug.Log("  空格键：在音乐播放时录制音符时间点", DebugChannel.Rhythm);
+        ProjectDebug.Log("  S键：将录制的谱面保存为JSON文件", DebugChannel.Rhythm);
+        ProjectDebug.Log("  R键：清空当前录制的谱面数据", DebugChannel.Rhythm);
     }
 
     private void Update()
@@ -149,13 +149,13 @@ public class BeatmapRecorder : MonoBehaviour
         // 检查音乐是否正在播放
         if (audioSource == null)
         {
-            Debug.LogWarning("[BeatmapRecorder] AudioSource未分配，无法录制");
+            ProjectDebug.LogWarning("[BeatmapRecorder] AudioSource未分配，无法录制", DebugChannel.Rhythm);
             return;
         }
 
         if (!audioSource.isPlaying)
         {
-            Debug.LogWarning("[BeatmapRecorder] 音乐未播放，请先播放音乐再录制");
+            ProjectDebug.LogWarning("[BeatmapRecorder] 音乐未播放，请先播放音乐再录制", DebugChannel.Rhythm);
             return;
         }
 
@@ -174,7 +174,7 @@ public class BeatmapRecorder : MonoBehaviour
         recordedNotes.Add(note);
 
         // 打印记录的时间点
-        Debug.Log($"[录制] 时间点: {currentTime:F3}秒, 已录制音符数: {recordedNotes.Count}");
+        ProjectDebug.Log($"[录制] 时间点: {currentTime:F3}秒, 已录制音符数: {recordedNotes.Count}", DebugChannel.Rhythm);
 
         isRecording = true;
     }
@@ -188,7 +188,7 @@ public class BeatmapRecorder : MonoBehaviour
     {
         if (recordedNotes.Count == 0)
         {
-            Debug.LogWarning("[BeatmapRecorder] 没有录制的音符数据");
+            ProjectDebug.LogWarning("[BeatmapRecorder] 没有录制的音符数据", DebugChannel.Rhythm);
             return;
         }
 
@@ -199,7 +199,7 @@ public class BeatmapRecorder : MonoBehaviour
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
-                Debug.Log($"[BeatmapRecorder] 已创建目录: {directory}");
+                ProjectDebug.Log($"[BeatmapRecorder] 已创建目录: {directory}", DebugChannel.Rhythm);
             }
 
             // 序列化为JSON
@@ -208,14 +208,14 @@ public class BeatmapRecorder : MonoBehaviour
             // 写入文件
             File.WriteAllText(outputPath, json);
 
-            Debug.Log($"[BeatmapRecorder] 谱面已保存! 路径: {outputPath}");
-            Debug.Log($"[BeatmapRecorder] 共录制 {recordedNotes.Count} 个音符");
+            ProjectDebug.Log($"[BeatmapRecorder] 谱面已保存! 路径: {outputPath}", DebugChannel.Rhythm);
+            ProjectDebug.Log($"[BeatmapRecorder] 共录制 {recordedNotes.Count} 个音符", DebugChannel.Rhythm);
 
             isRecording = false;
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[BeatmapRecorder] 保存失败: {e.Message}");
+            ProjectDebug.LogError($"[BeatmapRecorder] 保存失败: {e.Message}", DebugChannel.Rhythm);
         }
     }
     #endregion
@@ -227,7 +227,7 @@ public class BeatmapRecorder : MonoBehaviour
     public void ClearBeatmap()
     {
         recordedNotes.Clear();
-        Debug.Log("[BeatmapRecorder] 已清空所有录制的音符数据");
+        ProjectDebug.Log("[BeatmapRecorder] 已清空所有录制的音符数据", DebugChannel.Rhythm);
         isRecording = false;
     }
     #endregion

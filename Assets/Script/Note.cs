@@ -307,7 +307,7 @@ public class Note : MonoBehaviour
                     originalTailSpriteHeight = 1f;
                 }
 
-                Debug.Log($"[Note] LongNote Tail setup: drawMode={(tailSpriteRenderer != null ? tailSpriteRenderer.drawMode.ToString() : "No SpriteRenderer")}, useSlicedTail={useSlicedTail}, tailBaseLocalScale={tailBaseLocalScale}, originalTailSpriteHeight={originalTailSpriteHeight:F3}");
+                ProjectDebug.Log($"[Note] LongNote Tail setup: drawMode={(tailSpriteRenderer != null ? tailSpriteRenderer.drawMode.ToString() : "No SpriteRenderer")}, useSlicedTail={useSlicedTail}, tailBaseLocalScale={tailBaseLocalScale}, originalTailSpriteHeight={originalTailSpriteHeight:F3}", DebugChannel.Rhythm);
 
                 // 调用 UpdateTailVisuals 初始化视觉
                 UpdateTailVisuals();

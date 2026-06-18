@@ -160,7 +160,7 @@ public class RhythmManager : MonoBehaviour
             LoadBeatmap(beatmapFileName);
         }
 
-        Debug.Log("[RhythmManager] 初始化完成");
+        ProjectDebug.Log("[RhythmManager] 初始化完成", DebugChannel.Rhythm);
     }
 
     private void Update()
@@ -211,7 +211,7 @@ public class RhythmManager : MonoBehaviour
                 {
                     // 直接调用 InputManager 的立即触发长按
                     InputManager.Instance.TriggerImmediateHold(note.trackID);
-                    Debug.Log($"[即时拦截] 轨道{note.trackID}长按音符在判定区内立即触发");
+                    ProjectDebug.Log($"[即时拦截] 轨道{note.trackID}长按音符在判定区内立即触发", DebugChannel.Rhythm);
                 }
             }
         }
@@ -287,7 +287,7 @@ public class RhythmManager : MonoBehaviour
         else
         {
             spawnX = 10f;
-            Debug.LogWarning("[RhythmManager] SpawnPoint 未设置，使用默认值 10");
+            ProjectDebug.LogWarning("[RhythmManager] SpawnPoint 未设置，使用默认值 10", DebugChannel.Rhythm);
         }
 
         // 从 judgmentArea 读取 judgementX
@@ -298,10 +298,10 @@ public class RhythmManager : MonoBehaviour
         else
         {
             judgementX = 0f;
-            Debug.LogWarning("[RhythmManager] JudgmentArea 未设置，使用默认值 0");
+            ProjectDebug.LogWarning("[RhythmManager] JudgmentArea 未设置，使用默认值 0", DebugChannel.Rhythm);
         }
 
-        Debug.Log($"[RhythmManager] 生成点 X={spawnX}, 判定区 X={judgementX}");
+        ProjectDebug.Log($"[RhythmManager] 生成点 X={spawnX}, 判定区 X={judgementX}", DebugChannel.Rhythm);
     }
 
     /// <summary>
@@ -330,11 +330,11 @@ public class RhythmManager : MonoBehaviour
             InputManager.Instance.OnHoldStart += OnHoldStartHandler;
             InputManager.Instance.OnHoldUpdate += OnHoldUpdateHandler;
             InputManager.Instance.OnHoldEnd += OnHoldEndHandler;
-            Debug.Log("[RhythmManager] 已订阅输入事件");
+            ProjectDebug.Log("[RhythmManager] 已订阅输入事件", DebugChannel.Rhythm);
         }
         else
         {
-            Debug.LogWarning("[RhythmManager] InputManager.Instance 为空!");
+            ProjectDebug.LogWarning("[RhythmManager] InputManager.Instance 为空!", DebugChannel.Rhythm);
         }
     }
 
@@ -360,7 +360,7 @@ public class RhythmManager : MonoBehaviour
     /// </summary>
     private void OnTapHandler(int trackID)
     {
-        Debug.Log($"[输入] 收到普通单按事件，轨道: {trackID}");
+        ProjectDebug.Log($"[输入] 收到普通单按事件，轨道: {trackID}", DebugChannel.Rhythm);
 
         if (activeNotes.Count == 0) return;
 
@@ -383,11 +383,11 @@ public class RhythmManager : MonoBehaviour
                 score += 100 * combo;
                 EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
                 EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
-                Debug.Log($"[长按命中头部(短按)] combo: {combo}, score: {score}");
+                ProjectDebug.Log($"[长按命中头部(短按)] combo: {combo}, score: {score}", DebugChannel.Rhythm);
             }
             else
             {
-                Debug.Log($"[长按命中失败(短按)] holdStartWindowX: {holdStartWindowX:F2}");
+                ProjectDebug.Log($"[长按命中失败(短按)] holdStartWindowX: {holdStartWindowX:F2}", DebugChannel.Rhythm);
             }
             return;
         }
@@ -395,7 +395,7 @@ public class RhythmManager : MonoBehaviour
         // 普通音符
         if (note.noteType != NoteType.Normal)
         {
-            Debug.Log($"[判定] 类型不匹配: 期望Normal, 实际{note.noteType}");
+            ProjectDebug.Log($"[判定] 类型不匹配: 期望Normal, 实际{note.noteType}", DebugChannel.Rhythm);
             return;
         }
 
@@ -411,7 +411,7 @@ public class RhythmManager : MonoBehaviour
     /// </summary>
     private void OnStrongTapHandler(int trackID)
     {
-        Debug.Log($"[输入] 收到大力单按事件，轨道: {trackID}");
+        ProjectDebug.Log($"[输入] 收到大力单按事件，轨道: {trackID}", DebugChannel.Rhythm);
 
         if (activeNotes.Count == 0) return;
 
@@ -434,18 +434,18 @@ public class RhythmManager : MonoBehaviour
                 score += 100 * combo;
                 EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
                 EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
-                Debug.Log($"[长按命中头部(大力)] combo: {combo}, score: {score}");
+                ProjectDebug.Log($"[长按命中头部(大力)] combo: {combo}, score: {score}", DebugChannel.Rhythm);
             }
             else
             {
-                Debug.Log($"[长按命中失败(大力)] holdStartWindowX: {holdStartWindowX:F2}");
+                ProjectDebug.Log($"[长按命中失败(大力)] holdStartWindowX: {holdStartWindowX:F2}", DebugChannel.Rhythm);
             }
             return;
         }
 
         if (note.noteType != NoteType.Strong)
         {
-            Debug.Log($"[判定] 类型不匹配: 期望Strong, 实际{note.noteType}");
+            ProjectDebug.Log($"[判定] 类型不匹配: 期望Strong, 实际{note.noteType}", DebugChannel.Rhythm);
             return;
         }
 
@@ -460,11 +460,11 @@ public class RhythmManager : MonoBehaviour
     /// </summary>
     private void OnHoldStartHandler(int trackID)
     {
-        Debug.Log($"[长按] 轨道{trackID}长按开始");
+        ProjectDebug.Log($"[长按] 轨道{trackID}长按开始", DebugChannel.Rhythm);
 
         if (activeNotes.Count == 0)
         {
-            Debug.Log($"[长按] 无活跃音符，activeNotes.Count=0");
+            ProjectDebug.Log($"[长按] 无活跃音符，activeNotes.Count=0", DebugChannel.Rhythm);
             return;
         }
 
@@ -476,10 +476,10 @@ public class RhythmManager : MonoBehaviour
 
         if (note == null)
         {
-            Debug.Log($"[长按] 轨道{trackID}没有未判定的长按音符，activeNotes.Count={activeNotes.Count}");
+            ProjectDebug.Log($"[长按] 轨道{trackID}没有未判定的长按音符，activeNotes.Count={activeNotes.Count}", DebugChannel.Rhythm);
             foreach (var n in activeNotes)
             {
-                Debug.Log($"  音符: track={n.trackID}, type={n.noteType}, judged={n.isJudged}, HeadX={n.HeadX:F2}");
+                ProjectDebug.Log($"  音符: track={n.trackID}, type={n.noteType}, judged={n.isJudged}, HeadX={n.HeadX:F2}", DebugChannel.Rhythm);
             }
             return;
         }
@@ -495,11 +495,11 @@ public class RhythmManager : MonoBehaviour
             AudioManager.Instance.PlayLongHit();
             EffectManager.Instance.TriggerKeyPressVisual(note.trackID);
             EffectManager.Instance.StartHoldSpark(note.trackID, GetJudgmentEffectPosition(note));
-            Debug.Log($"[长按头部拦截成功] combo: {combo}, score: {score}");
+            ProjectDebug.Log($"[长按头部拦截成功] combo: {combo}, score: {score}", DebugChannel.Rhythm);
         }
         else
         {
-            Debug.Log($"[长按头部拦截失败] holdStartWindowX: {holdStartWindowX:F2}");
+            ProjectDebug.Log($"[长按头部拦截失败] holdStartWindowX: {holdStartWindowX:F2}", DebugChannel.Rhythm);
         }
     }
 
@@ -516,7 +516,7 @@ public class RhythmManager : MonoBehaviour
     /// </summary>
     private void OnHoldEndHandler(int trackID)
     {
-        Debug.Log($"[长按] 轨道{trackID}长按结束");
+        ProjectDebug.Log($"[长按] 轨道{trackID}长按结束", DebugChannel.Rhythm);
 
         Note note = activeNotes.FirstOrDefault(n =>
             n.trackID == trackID &&
@@ -529,7 +529,7 @@ public class RhythmManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[长按] 轨道{trackID}没有正在长按的音符");
+            ProjectDebug.Log($"[长按] 轨道{trackID}没有正在长按的音符", DebugChannel.Rhythm);
         }
     }
     #endregion
@@ -559,7 +559,7 @@ public class RhythmManager : MonoBehaviour
                 note.isJudged = true;  // 标记为已完成
                 ClearLongHoldComboTick(note);
                 EffectManager.Instance.StopHoldSpark(note.trackID);
-                Debug.Log($"[长按完成] 音符完美结束，combo: {combo}");
+                ProjectDebug.Log($"[长按完成] 音符完美结束，combo: {combo}", DebugChannel.Rhythm);
                 // 不在这里销毁，让音符继续移动直到越界
             }
 
@@ -578,7 +578,7 @@ public class RhythmManager : MonoBehaviour
                 note.isBeingHeld = false;
                 ClearLongHoldComboTick(note);
                 EffectManager.Instance.StopHoldSpark(note.trackID);
-                Debug.Log($"[Miss] 长按头部漏判");
+                ProjectDebug.Log($"[Miss] 长按头部漏判", DebugChannel.Rhythm);
                 combo = 0;
                 AudioManager.Instance.PlayMiss();
                 RegisterMiss(note, "Long head missed");
@@ -591,17 +591,17 @@ public class RhythmManager : MonoBehaviour
                 // 注意：特效已在规则A或规则B中提前停止，这里只销毁对象
                 if (note.isBeingHeld)
                 {
-                    Debug.Log($"[长按完成] 音符完美结束，combo: {combo}");
+                    ProjectDebug.Log($"[长按完成] 音符完美结束，combo: {combo}", DebugChannel.Rhythm);
                 }
                 else if (note.isJudged)
                 {
-                    Debug.Log($"[长按结束] 漏按/松手，音符飘完");
+                    ProjectDebug.Log($"[长按结束] 漏按/松手，音符飘完", DebugChannel.Rhythm);
                 }
                 else
                 {
                     // 从未被判定过，现在尾巴越界 -> 算Miss
                     note.isJudged = true;
-                    Debug.Log($"[Miss] 长按音符头部漏判");
+                    ProjectDebug.Log($"[Miss] 长按音符头部漏判", DebugChannel.Rhythm);
                     combo = 0;
                     RegisterMiss(note, "Long tail passed unjudged");
                 }
@@ -638,7 +638,7 @@ public class RhythmManager : MonoBehaviour
 
         if (distance > missWindowX)
         {
-            Debug.Log($"[Miss] 普通音符类型: {note.noteType}");
+            ProjectDebug.Log($"[Miss] 普通音符类型: {note.noteType}", DebugChannel.Rhythm);
             combo = 0;
             AudioManager.Instance.PlayMiss();
             RegisterMiss(note, $"{note.noteType} missed");
@@ -669,7 +669,7 @@ public class RhythmManager : MonoBehaviour
         if (note == null) return false;
 
         float xDistance = Mathf.Abs(note.GetJudgementX() - judgementX);
-        Debug.Log($"[判定] xDistance: {xDistance:F2}, hitWindowX: {hitWindowX:F2}");
+        ProjectDebug.Log($"[判定] xDistance: {xDistance:F2}, hitWindowX: {hitWindowX:F2}", DebugChannel.Rhythm);
         return xDistance <= hitWindowX;
     }
 
@@ -678,7 +678,7 @@ public class RhythmManager : MonoBehaviour
         if (note == null) return false;
 
         float xDistance = Mathf.Abs(note.HeadX - judgementX);
-        Debug.Log($"[长按判定] xDistance: {xDistance:F2}, holdStartWindowX: {holdStartWindowX:F2}");
+        ProjectDebug.Log($"[长按判定] xDistance: {xDistance:F2}, holdStartWindowX: {holdStartWindowX:F2}", DebugChannel.Rhythm);
         return xDistance <= holdStartWindowX;
     }
 
@@ -705,19 +705,19 @@ public class RhythmManager : MonoBehaviour
         }
 
         RegisterMiss(note, reason);
-        Debug.Log($"[长按释放] trackID={note.trackID}, reason={reason}, currentPhysicalLength={note.currentPhysicalLength:F2}");
+        ProjectDebug.Log($"[长按释放] trackID={note.trackID}, reason={reason}, currentPhysicalLength={note.currentPhysicalLength:F2}", DebugChannel.Rhythm);
     }
 
     private void RegisterHit(Note note, string reason)
     {
         hitCount++;
-        Debug.Log($"[HUD Stats] Hit +1 ({reason}) hit={hitCount}, miss={missCount}, beat={GetBeatCount()}");
+        ProjectDebug.Log($"[HUD Stats] Hit +1 ({reason}) hit={hitCount}, miss={missCount}, beat={GetBeatCount()}", DebugChannel.Rhythm);
     }
 
     private void RegisterMiss(Note note, string reason)
     {
         missCount++;
-        Debug.Log($"[HUD Stats] Miss +1 ({reason}) hit={hitCount}, miss={missCount}, beat={GetBeatCount()}");
+        ProjectDebug.Log($"[HUD Stats] Miss +1 ({reason}) hit={hitCount}, miss={missCount}, beat={GetBeatCount()}", DebugChannel.Rhythm);
     }
 
     private float GetComboTickTime()
@@ -750,7 +750,7 @@ public class RhythmManager : MonoBehaviour
         if (amount <= 0) return;
 
         combo += amount;
-        Debug.Log($"[Combo] +{amount} ({reason}) combo={combo}");
+        ProjectDebug.Log($"[Combo] +{amount} ({reason}) combo={combo}", DebugChannel.Rhythm);
     }
 
     private void ProcessLongHoldComboTick(Note note)
@@ -827,13 +827,13 @@ public class RhythmManager : MonoBehaviour
             // 如果是长按且正在按压中Miss，额外扣分
             if (note.noteType == NoteType.Long && note.isBeingHeld)
             {
-                Debug.Log($"[Miss] 长按未松手，音符类型: {note.noteType}");
+                ProjectDebug.Log($"[Miss] 长按未松手，音符类型: {note.noteType}", DebugChannel.Rhythm);
                 combo = 0;
                 AudioManager.Instance.PlayMiss();
             }
             else
             {
-                Debug.Log($"[Miss] 音符类型: {note.noteType}");
+                ProjectDebug.Log($"[Miss] 音符类型: {note.noteType}", DebugChannel.Rhythm);
                 combo = 0;
             }
             RegisterMiss(note, $"{note.noteType} passed miss line");
@@ -854,7 +854,7 @@ public class RhythmManager : MonoBehaviour
             if (!note.isBeingHeld)
             {
                 note.isBeingHeld = true;
-                Debug.Log($"[长按开始，命中头部] 位置: {note.HeadX:F2}");
+                ProjectDebug.Log($"[长按开始，命中头部] 位置: {note.HeadX:F2}", DebugChannel.Rhythm);
             }
             return;
         }
@@ -884,7 +884,7 @@ public class RhythmManager : MonoBehaviour
 
         score += baseScore * combo;
 
-        Debug.Log($"[{rating}] 命中 {note.noteType} 音符! +{baseScore * combo} 分 (combo: {combo})");
+        ProjectDebug.Log($"[{rating}] 命中 {note.noteType} 音符! +{baseScore * combo} 分 (combo: {combo})", DebugChannel.Rhythm);
 
         RemoveNote(note);
     }
@@ -928,7 +928,7 @@ public class RhythmManager : MonoBehaviour
 
         if (!File.Exists(path))
         {
-            Debug.LogWarning($"[RhythmManager] 曲谱文件不存在: {path}");
+            ProjectDebug.LogWarning($"[RhythmManager] 曲谱文件不存在: {path}", DebugChannel.Rhythm);
             return;
         }
 
@@ -939,7 +939,7 @@ public class RhythmManager : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[RhythmManager] 读取曲谱文件失败: {e.Message}");
+            ProjectDebug.LogError($"[RhythmManager] 读取曲谱文件失败: {e.Message}", DebugChannel.Rhythm);
             return;
         }
 
@@ -947,7 +947,7 @@ public class RhythmManager : MonoBehaviour
 
         if (beatmap?.notes == null || beatmap.notes.Length == 0)
         {
-            Debug.LogWarning("[RhythmManager] 曲谱为空或解析失败");
+            ProjectDebug.LogWarning("[RhythmManager] 曲谱为空或解析失败", DebugChannel.Rhythm);
             return;
         }
 
@@ -970,7 +970,7 @@ public class RhythmManager : MonoBehaviour
             if (allTrackZero)
             {
                 randomTrackForBeatmap = 0; // 0 表示启用每音符随机模式
-                Debug.Log($"[RhythmManager] 随机轨道模式: 每个音符将独立随机分配到1-4轨道");
+                ProjectDebug.Log($"[RhythmManager] 随机轨道模式: 每个音符将独立随机分配到1-4轨道", DebugChannel.Rhythm);
             }
         }
 
@@ -979,7 +979,7 @@ public class RhythmManager : MonoBehaviour
             pendingNotes.Enqueue(note);
         }
 
-        Debug.Log($"[RhythmManager] 加载曲谱: {fileName}, 共 {pendingNotes.Count} 个音符");
+        ProjectDebug.Log($"[RhythmManager] 加载曲谱: {fileName}, 共 {pendingNotes.Count} 个音符", DebugChannel.Rhythm);
     }
 
     /// <summary>
@@ -1099,7 +1099,7 @@ public class RhythmManager : MonoBehaviour
             // 所有预制体都为空时，使用 Quad 兜底
             noteObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
             noteObj.name = $"Note_{type}";
-            Debug.LogWarning($"[RhythmManager] {type} 预制体未设置，使用临时对象");
+            ProjectDebug.LogWarning($"[RhythmManager] {type} 预制体未设置，使用临时对象", DebugChannel.Rhythm);
         }
 
         // 轨道边界检查
@@ -1116,7 +1116,7 @@ public class RhythmManager : MonoBehaviour
         else
         {
             trackY = track;
-            Debug.LogWarning($"[RhythmManager] trackTransforms[{track}] 未设置，使用默认值 {trackY}");
+            ProjectDebug.LogWarning($"[RhythmManager] trackTransforms[{track}] 未设置，使用默认值 {trackY}", DebugChannel.Rhythm);
         }
 
         // 设置位置
@@ -1136,7 +1136,7 @@ public class RhythmManager : MonoBehaviour
 
         activeNotes.Add(note);
 
-        Debug.Log($"[生成音符] 类型: {type}, 轨道: {track}, 位置: ({spawnX}, {trackY}), activeNotes.Count: {activeNotes.Count}");
+        ProjectDebug.Log($"[生成音符] 类型: {type}, 轨道: {track}, 位置: ({spawnX}, {trackY}), activeNotes.Count: {activeNotes.Count}", DebugChannel.Rhythm);
     }
     #endregion
 

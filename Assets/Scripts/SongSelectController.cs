@@ -117,7 +117,7 @@ public class SongSelectController : MonoBehaviour
 
         if (contentRoot == null || itemPrefab == null)
         {
-            Debug.LogWarning("[SongSelectController] contentRoot or itemPrefab is missing.", this);
+            ProjectDebug.LogWarning("[SongSelectController] contentRoot or itemPrefab is missing.", DebugChannel.UI, this);
             RefreshSelectButtonState();
             RefreshScrollbarVisuals();
             return;
@@ -135,7 +135,7 @@ public class SongSelectController : MonoBehaviour
 
         if (songDatabase == null || songDatabase.songs == null)
         {
-            Debug.LogWarning("[SongSelectController] songDatabase is missing.", this);
+            ProjectDebug.LogWarning("[SongSelectController] songDatabase is missing.", DebugChannel.UI, this);
             RefreshSelectButtonState();
             return;
         }

@@ -42,7 +42,7 @@ public class SceneTransitionManager : MonoBehaviour
         EnsureTransitionUI();
         if (fadeImage == null)
         {
-            Debug.LogWarning("[SceneTransitionManager] fadeImage is missing. Loading scene without fade.", this);
+            ProjectDebug.LogWarning("[SceneTransitionManager] fadeImage is missing. Loading scene without fade.", DebugChannel.Scene, this);
             SceneManager.LoadScene(sceneName);
             return;
         }

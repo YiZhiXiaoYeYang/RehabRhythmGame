@@ -65,7 +65,7 @@ public class PauseManager : MonoBehaviour
         }
 
         UpdateButtonVisual();
-        Debug.Log("[PauseManager] Game paused.", this);
+        ProjectDebug.Log("[PauseManager] Game paused.", DebugChannel.UI, this);
     }
 
     public void ResumeGame()
@@ -79,7 +79,7 @@ public class PauseManager : MonoBehaviour
         }
 
         UpdateButtonVisual();
-        Debug.Log("[PauseManager] Game resumed.", this);
+        ProjectDebug.Log("[PauseManager] Game resumed.", DebugChannel.UI, this);
     }
 
     private void UpdateButtonVisual()
@@ -92,7 +92,7 @@ public class PauseManager : MonoBehaviour
         Sprite targetSprite = IsPaused ? playSprite : pauseSprite;
         if (targetSprite == null)
         {
-            Debug.LogWarning($"[PauseManager] Missing {(IsPaused ? "playSprite" : "pauseSprite")} for pause button.", this);
+            ProjectDebug.LogWarning($"[PauseManager] Missing {(IsPaused ? "playSprite" : "pauseSprite")} for pause button.", DebugChannel.UI, this);
             return;
         }
 
@@ -110,7 +110,7 @@ public class PauseManager : MonoBehaviour
         if (rhythmManager != null && rhythmManager.bgmSource != null)
         {
             bgmSource = rhythmManager.bgmSource;
-            Debug.Log($"[PauseManager] Bound bgmSource from RhythmManager: {bgmSource.name}", this);
+            ProjectDebug.Log($"[PauseManager] Bound bgmSource from RhythmManager: {bgmSource.name}", DebugChannel.UI, this);
         }
     }
 

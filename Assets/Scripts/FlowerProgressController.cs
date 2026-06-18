@@ -168,7 +168,7 @@ public class FlowerProgressController : MonoBehaviour
         initialColors.Clear();
         initialTransformScales.Clear();
         CacheInitialState();
-        Debug.Log("[FlowerProgressController] Rebuilt initial color and scale cache from current renderer values.", this);
+        ProjectDebug.Log("[FlowerProgressController] Rebuilt initial color and scale cache from current renderer values.", DebugChannel.UI, this);
     }
 
     [ContextMenu("Reset Visual State")]
@@ -190,7 +190,7 @@ public class FlowerProgressController : MonoBehaviour
             }
         }
 
-        Debug.Log("[FlowerProgressController] Reset visual state to cached initial colors and local scales.", this);
+        ProjectDebug.Log("[FlowerProgressController] Reset visual state to cached initial colors and local scales.", DebugChannel.UI, this);
     }
 
     private void ApplyStaticRenderer(SpriteRenderer renderer, string label)
@@ -353,7 +353,7 @@ public class FlowerProgressController : MonoBehaviour
     {
         if (warningKeys.Add(key))
         {
-            Debug.LogWarning(message, this);
+            ProjectDebug.LogWarning(message, DebugChannel.UI, this);
         }
     }
 }

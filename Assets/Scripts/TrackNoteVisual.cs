@@ -26,7 +26,7 @@ public class TrackNoteVisual : MonoBehaviour
     {
         if (trackID < 0 || trackID >= TrackCount)
         {
-            Debug.LogWarning($"[TrackNoteVisual] Invalid trackID {trackID} on {name}. Expected 0-{TrackCount - 1}.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] Invalid trackID {trackID} on {name}. Expected 0-{TrackCount - 1}.", DebugChannel.Gameplay);
             return;
         }
 
@@ -56,19 +56,19 @@ public class TrackNoteVisual : MonoBehaviour
     {
         if (mainRenderer == null)
         {
-            Debug.LogWarning($"[TrackNoteVisual] Missing mainRenderer on {name}.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] Missing mainRenderer on {name}.", DebugChannel.Gameplay);
             return;
         }
 
         if (!HasTrackArray(trackSprites))
         {
-            Debug.LogWarning($"[TrackNoteVisual] trackSprites on {name} must contain {TrackCount} sprites.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] trackSprites on {name} must contain {TrackCount} sprites.", DebugChannel.Gameplay);
             return;
         }
 
         if (trackSprites[trackID] == null)
         {
-            Debug.LogWarning($"[TrackNoteVisual] Missing SingleRenderer sprite for track {trackID} on {name}.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] Missing SingleRenderer sprite for track {trackID} on {name}.", DebugChannel.Gameplay);
             return;
         }
 
@@ -79,25 +79,25 @@ public class TrackNoteVisual : MonoBehaviour
     {
         if (headRenderer == null || tailRenderer == null)
         {
-            Debug.LogWarning($"[TrackNoteVisual] Missing headRenderer or tailRenderer on {name}.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] Missing headRenderer or tailRenderer on {name}.", DebugChannel.Gameplay);
             return;
         }
 
         if (!HasTrackArray(headSprites) || !HasTrackArray(tailSprites))
         {
-            Debug.LogWarning($"[TrackNoteVisual] headSprites and tailSprites on {name} must each contain {TrackCount} sprites.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] headSprites and tailSprites on {name} must each contain {TrackCount} sprites.", DebugChannel.Gameplay);
             return;
         }
 
         if (headSprites[trackID] == null)
         {
-            Debug.LogWarning($"[TrackNoteVisual] Missing LongNote head sprite for track {trackID} on {name}.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] Missing LongNote head sprite for track {trackID} on {name}.", DebugChannel.Gameplay);
             return;
         }
 
         if (tailSprites[trackID] == null)
         {
-            Debug.LogWarning($"[TrackNoteVisual] Missing LongNote tail sprite for track {trackID} on {name}.");
+            ProjectDebug.LogWarning($"[TrackNoteVisual] Missing LongNote tail sprite for track {trackID} on {name}.", DebugChannel.Gameplay);
             return;
         }
 

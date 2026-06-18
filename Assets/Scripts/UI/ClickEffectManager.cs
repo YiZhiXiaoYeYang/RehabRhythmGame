@@ -63,7 +63,7 @@ public class ClickEffectManager : MonoBehaviour
         {
             if (!hasWarnedMissingSprite)
             {
-                Debug.LogWarning("[ClickEffectManager] rippleSprite is missing.", this);
+                ProjectDebug.LogWarning("[ClickEffectManager] rippleSprite is missing.", DebugChannel.UI, this);
                 hasWarnedMissingSprite = true;
             }
 

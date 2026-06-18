@@ -85,7 +85,7 @@ public class EffectManager : MonoBehaviour
             return trackColors[trackID];
         }
 
-        Debug.LogWarning($"[EffectManager] Invalid trackID {trackID} for particle color. Using white.", this);
+        ProjectDebug.LogWarning($"[EffectManager] Invalid trackID {trackID} for particle color. Using white.", DebugChannel.Gameplay, this);
         return Color.white;
     }
 
