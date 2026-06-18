@@ -52,6 +52,15 @@ public class InputManager : MonoBehaviour
     public KeyCode strongAssistKey = KeyCode.Space;
     #endregion
 
+    #region 输入来源
+    [Header("输入来源")]
+    public bool enableKeyboardInput = true;
+    public bool enableGloveInput = false;
+    public GloveInputBridge gloveInputBridge;
+    public bool autoFindGloveBridge = true;
+    public bool logInputSourceEvents = false;
+    #endregion
+
     #region 判定参数（暴露给编辑器）
     /// <summary>
     /// 大力单按时间容差（秒）
@@ -63,6 +72,9 @@ public class InputManager : MonoBehaviour
     /// 单按最大持续时间（秒），超过则视为长按
     /// </summary>
     public float tapTimeThreshold = 0.2f;
+
+    [Header("硬件输入参数")]
+    public float gloveStrongTapTimeThreshold = 0.18f;
     #endregion
 
     #region 私有变量
@@ -87,6 +99,12 @@ public class InputManager : MonoBehaviour
 
     // 4个轨道的强单按是否已判定
     private bool[] isStrongTapChecked = new bool[4];
+
+    private bool[] isTrackStrongPressed = new bool[4];
+    private bool[] isGlovePressedThisFrame = new bool[4];
+    private bool[] isGloveHardThisFrame = new bool[4];
+    private bool[] previousGlovePressed = new bool[4];
+    private bool[] previousGloveHardPressed = new bool[4];
     #endregion
 
     #region Unity生命周期
@@ -100,6 +118,7 @@ public class InputManager : MonoBehaviour
         Instance = this;
 
         trackKeys = new KeyCode[] { track0Key, track1Key, track2Key, track3Key };
+        FindGloveBridgeIfNeeded();
     }
 
     private void Update()
@@ -114,6 +133,7 @@ public class InputManager : MonoBehaviour
         trackKeys[1] = track1Key;
         trackKeys[2] = track2Key;
         trackKeys[3] = track3Key;
+        FindGloveBridgeIfNeeded();
 
         // 检测4个轨道的按键状态
         for (int track = 0; track < 4; track++)
@@ -132,17 +152,49 @@ public class InputManager : MonoBehaviour
     #region 按键检测
     private void CheckTrackKeyState(int track)
     {
-        bool newPressed = Input.GetKey(trackKeys[track]);
+        bool keyboardPressed = enableKeyboardInput && Input.GetKey(trackKeys[track]);
+        bool keyboardStrong = enableKeyboardInput && keyboardPressed && Input.GetKey(strongAssistKey);
+
+        bool glovePressed = false;
+        bool gloveStrong = false;
+
+        if (enableGloveInput && gloveInputBridge != null)
+        {
+            glovePressed = gloveInputBridge.IsTrackPressed(track);
+            gloveStrong = gloveInputBridge.IsTrackHardPressed(track);
+        }
+
+        isGlovePressedThisFrame[track] = glovePressed && !previousGlovePressed[track];
+        isGloveHardThisFrame[track] = gloveStrong && !previousGloveHardPressed[track];
+        previousGlovePressed[track] = glovePressed;
+        previousGloveHardPressed[track] = gloveStrong;
+
+        bool newPressed = keyboardPressed || glovePressed;
+        bool newStrongPressed = keyboardStrong || gloveStrong;
 
         if (newPressed && !isTrackPressed[track])
         {
+            if (logInputSourceEvents)
+            {
+                ProjectDebug.Log($"[InputManager] Track{track} pressed by {GetInputSourceName(keyboardPressed, glovePressed)}", DebugChannel.Hardware, this);
+            }
             OnTrackPressed(track);
         }
         else if (!newPressed && isTrackPressed[track])
         {
+            if (logInputSourceEvents)
+            {
+                ProjectDebug.Log($"[InputManager] Track{track} released", DebugChannel.Hardware, this);
+            }
             OnTrackReleased(track);
         }
 
+        if (newStrongPressed && !isTrackStrongPressed[track] && logInputSourceEvents)
+        {
+            ProjectDebug.Log($"[InputManager] Track{track} strong pressed", DebugChannel.Hardware, this);
+        }
+
+        isTrackStrongPressed[track] = newStrongPressed;
         isTrackPressed[track] = newPressed;
     }
 
@@ -184,11 +236,17 @@ public class InputManager : MonoBehaviour
     #region 状态处理
     private void ProcessTrackState(int track)
     {
-        // 检测大力单按：轨道键 + 空格键同时按
-        if (isTrackPressed[track] && Input.GetKey(strongAssistKey))
+        if (isTrackPressed[track] && isTrackStrongPressed[track])
         {
             float timeSincePress = Time.time - trackPressTime[track];
-            if (timeSincePress <= strongTapTimeThreshold && !isStrongTapChecked[track])
+            float allowedStrongWindow = strongTapTimeThreshold;
+
+            if (enableGloveInput && gloveInputBridge != null && gloveInputBridge.IsTrackHardPressed(track))
+            {
+                allowedStrongWindow = Mathf.Max(strongTapTimeThreshold, gloveStrongTapTimeThreshold);
+            }
+
+            if (timeSincePress <= allowedStrongWindow && !isStrongTapChecked[track])
             {
                 TriggerStrongTap(track);
                 isStrongTapChecked[track] = true;
@@ -305,4 +363,29 @@ public class InputManager : MonoBehaviour
         OnHoldStart?.Invoke(track);
     }
     #endregion
+
+    private void FindGloveBridgeIfNeeded()
+    {
+        if (gloveInputBridge != null || !autoFindGloveBridge)
+        {
+            return;
+        }
+
+        gloveInputBridge = FindObjectOfType<GloveInputBridge>();
+    }
+
+    private string GetInputSourceName(bool keyboardPressed, bool glovePressed)
+    {
+        if (keyboardPressed && glovePressed)
+        {
+            return "Keyboard+Glove";
+        }
+
+        if (glovePressed)
+        {
+            return "Glove";
+        }
+
+        return "Keyboard";
+    }
 }
