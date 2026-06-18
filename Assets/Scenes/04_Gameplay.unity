@@ -3889,8 +3889,14 @@ MonoBehaviour:
   track2Key: 106
   track3Key: 109
   strongAssistKey: 32
+  enableKeyboardInput: 1
+  enableGloveInput: 1
+  gloveInputBridge: {fileID: 1101032797}
+  autoFindGloveBridge: 1
+  logInputSourceEvents: 0
   strongTapTimeThreshold: 0.1
   tapTimeThreshold: 0.2
+  gloveStrongTapTimeThreshold: 0.18
 --- !u!4 &934541624
 Transform:
   m_ObjectHideFlags: 0
@@ -3903,7 +3909,9 @@ Transform:
   m_LocalPosition: {x: -0.20113406, y: -0.6093956, z: 0.0029947697}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1212694095}
+  - {fileID: 1101032798}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &934541625
@@ -4352,6 +4360,60 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 567173878}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1101032796
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1101032798}
+  - component: {fileID: 1101032797}
+  m_Layer: 0
+  m_Name: GloveInputBridge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1101032797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1101032796}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23e78f142a719eb4dae12de7575bfb05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gloveReader: {fileID: 1212694094}
+  autoFindReader: 1
+  pressed: 00000000
+  hardPressed: 00000000
+  effectiveValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  logBridgeEvents: 0
+--- !u!4 &1101032798
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1101032796}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 934541624}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1141065901
 GameObject:
@@ -4907,12 +4969,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1212694093}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.6235772, y: -1.3584356, z: -0.043482747}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.4224432, y: -0.74904, z: -0.046477515}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 934541624}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1213480820
 GameObject:
@@ -8777,4 +8839,3 @@ SceneRoots:
   - {fileID: 8758164617486005981}
   - {fileID: 2163310391286413658}
   - {fileID: 154875228}
-  - {fileID: 1212694095}
