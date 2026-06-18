@@ -331,6 +331,12 @@ public class InputManager : MonoBehaviour
         return isTrackPressed[track];
     }
 
+    public bool IsTrackStrongPressed(int track)
+    {
+        if (track < 0 || track >= 4) return false;
+        return isTrackStrongPressed[track];
+    }
+
     /// <summary>
     /// 获取指定轨道是否处于长按状态
     /// </summary>

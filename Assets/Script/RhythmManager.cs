@@ -46,6 +46,14 @@ public class RhythmManager : MonoBehaviour
     public float missWindowX = 0.55f;
     public float holdStartWindowX = 0.35f;
     public bool drawJudgmentGizmos = true;
+
+    [Header("手套友好判定")]
+    public bool enableHeldInputHitAssist = true;
+    public bool requireNewPressForHeldAssist = true;
+    public bool allowHardPressToHitNormal = true;
+    public float heldAssistHitWindowX = 0.7f;
+    public float heldAssistHoldStartWindowX = 0.7f;
+    public bool logHeldAssist = true;
     #endregion
 
     #region 游戏状态
@@ -143,6 +151,8 @@ public class RhythmManager : MonoBehaviour
     private int hitCount = 0;
     private int missCount = 0;
     private Dictionary<Note, float> longHoldLastComboTickTimes = new Dictionary<Note, float>();
+    private bool[] heldAssistConsumedPress = new bool[4];
+    private bool[] previousTrackPressedForAssist = new bool[4];
     #endregion
 
     #region Unity生命周期
@@ -168,11 +178,15 @@ public class RhythmManager : MonoBehaviour
         // 更新位置参数（支持运行时动态调整）
         UpdatePositions();
 
+        UpdateHeldAssistPressState();
+
         // 即时长按拦截：检测长按音符头部是否在判定区内且对应轨道键按下
         CheckLongNoteImmediateHit();
 
         // 检查并生成待播放音符（自动读谱）
         GenerateNotesFromQueue();
+
+        CheckHeldInputImmediateHit();
 
         // 处理长按音符的生命周期（包含所有规则）
         ProcessLongNoteLifecycle();
@@ -204,7 +218,7 @@ public class RhythmManager : MonoBehaviour
             if (note.isJudged) continue; // 已判定的跳过
 
             // 检查头部是否在判定区内
-            if (IsInHoldStartWindow(note))
+            if (IsInHeldAssistHoldStartWindow(note))
             {
                 // 音符在判定区内，检查对应轨道键是否按下
                 if (InputManager.Instance.IsTrackPressed(note.trackID))
@@ -680,6 +694,105 @@ public class RhythmManager : MonoBehaviour
         float xDistance = Mathf.Abs(note.HeadX - judgementX);
         ProjectDebug.Log($"[长按判定] xDistance: {xDistance:F2}, holdStartWindowX: {holdStartWindowX:F2}", DebugChannel.Rhythm);
         return xDistance <= holdStartWindowX;
+    }
+
+    private bool IsInHeldAssistHoldStartWindow(Note note)
+    {
+        if (note == null) return false;
+
+        float xDistance = Mathf.Abs(note.HeadX - judgementX);
+        float window = enableHeldInputHitAssist
+            ? Mathf.Max(holdStartWindowX, heldAssistHoldStartWindowX)
+            : holdStartWindowX;
+
+        bool inWindow = xDistance <= window;
+        if (inWindow && logHeldAssist)
+        {
+            ProjectDebug.Log($"[HeldAssist Long] xDistance: {xDistance:F2}, window: {window:F2}", DebugChannel.Rhythm);
+        }
+
+        return inWindow;
+    }
+
+    private void UpdateHeldAssistPressState()
+    {
+        if (InputManager.Instance == null)
+        {
+            for (int track = 0; track < 4; track++)
+            {
+                previousTrackPressedForAssist[track] = false;
+                heldAssistConsumedPress[track] = false;
+            }
+            return;
+        }
+
+        for (int track = 0; track < 4; track++)
+        {
+            bool pressed = InputManager.Instance.IsTrackPressed(track);
+
+            if (!pressed && previousTrackPressedForAssist[track])
+            {
+                heldAssistConsumedPress[track] = false;
+            }
+
+            if (pressed && !previousTrackPressedForAssist[track])
+            {
+                heldAssistConsumedPress[track] = false;
+            }
+
+            previousTrackPressedForAssist[track] = pressed;
+        }
+    }
+
+    private void CheckHeldInputImmediateHit()
+    {
+        if (!enableHeldInputHitAssist) return;
+        if (InputManager.Instance == null) return;
+        if (activeNotes.Count == 0) return;
+
+        for (int i = 0; i < activeNotes.Count; i++)
+        {
+            Note note = activeNotes[i];
+            if (note == null) continue;
+            if (note.isJudged) continue;
+            if (note.noteType == NoteType.Long) continue;
+
+            int track = note.trackID;
+            if (track < 0 || track >= 4) continue;
+
+            bool pressed = InputManager.Instance.IsTrackPressed(track);
+            bool strongPressed = InputManager.Instance.IsTrackStrongPressed(track);
+
+            if (!pressed) continue;
+            if (requireNewPressForHeldAssist && heldAssistConsumedPress[track]) continue;
+
+            float xDistance = Mathf.Abs(note.GetJudgementX() - judgementX);
+            if (xDistance > heldAssistHitWindowX) continue;
+
+            if (note.noteType == NoteType.Normal)
+            {
+                if (allowHardPressToHitNormal || !strongPressed)
+                {
+                    heldAssistConsumedPress[track] = true;
+                    JudgementSuccess(note, "HeldAssist");
+                    if (logHeldAssist)
+                    {
+                        ProjectDebug.Log($"[HeldAssist] Normal hit track={track}, xDistance={xDistance:F2}", DebugChannel.Rhythm);
+                    }
+                    return;
+                }
+            }
+            else if (note.noteType == NoteType.Strong && strongPressed)
+            {
+                heldAssistConsumedPress[track] = true;
+                JudgementSuccess(note, "HeldAssist Strong");
+                if (logHeldAssist)
+                {
+                    ProjectDebug.Log($"[HeldAssist] Strong hit track={track}, xDistance={xDistance:F2}", DebugChannel.Rhythm);
+                }
+                return;
+            }
+        }
     }
 
     private void ReleaseHeldLongNote(Note note, string reason)

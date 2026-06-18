@@ -3931,10 +3931,16 @@ MonoBehaviour:
   longNoteLength: 2
   judgmentArea: {fileID: 1492959319}
   interactRadius: 0.5
-  hitWindowX: 0.55
-  missWindowX: 0.65
-  holdStartWindowX: 0.55
+  hitWindowX: 0.6
+  missWindowX: 0.8
+  holdStartWindowX: 0.6
   drawJudgmentGizmos: 1
+  enableHeldInputHitAssist: 1
+  requireNewPressForHeldAssist: 1
+  allowHardPressToHitNormal: 1
+  heldAssistHitWindowX: 0.7
+  heldAssistHoldStartWindowX: 0.7
+  logHeldAssist: 1
   score: 0
   combo: 0
   normalComboGain: 1
