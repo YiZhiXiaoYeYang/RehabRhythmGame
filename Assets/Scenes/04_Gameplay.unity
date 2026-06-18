@@ -4923,8 +4923,8 @@ MonoBehaviour:
   portName: COM5
   baudRate: 115200
   readTimeout: 100
-  pressThreshold: 4
-  hardPressThreshold: 40
+  pressThreshold: 3
+  hardPressThreshold: 30
   releaseThreshold: 2
   useBaselineCalibration: 1
   autoCalibrateOnStart: 1
