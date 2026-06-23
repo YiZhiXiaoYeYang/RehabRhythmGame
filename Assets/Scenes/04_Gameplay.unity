@@ -3884,10 +3884,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 402afbb8eadabfb418fd69867f559170, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  track0Key: 55
-  track1Key: 117
+  track0Key: 103
+  track1Key: 104
   track2Key: 106
-  track3Key: 109
+  track3Key: 107
   strongAssistKey: 32
   enableKeyboardInput: 1
   enableGloveInput: 1
@@ -3931,9 +3931,9 @@ MonoBehaviour:
   longNoteLength: 2
   judgmentArea: {fileID: 1492959319}
   interactRadius: 0.5
-  hitWindowX: 0.6
-  missWindowX: 0.8
-  holdStartWindowX: 0.6
+  hitWindowX: 0.75
+  missWindowX: 0.95
+  holdStartWindowX: 0.75
   drawJudgmentGizmos: 1
   enableHeldInputHitAssist: 1
   requireNewPressForHeldAssist: 1
@@ -4923,9 +4923,9 @@ MonoBehaviour:
   portName: COM5
   baudRate: 115200
   readTimeout: 100
-  pressThreshold: 3
-  hardPressThreshold: 30
-  releaseThreshold: 2
+  pressThreshold: 2
+  hardPressThreshold: 10
+  releaseThreshold: 1
   useBaselineCalibration: 1
   autoCalibrateOnStart: 1
   autoCalibrateDuration: 1
